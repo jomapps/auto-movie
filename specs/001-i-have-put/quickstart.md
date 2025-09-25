@@ -35,7 +35,24 @@ NEXTAUTH_URL=http://localhost:3010
 NEXTAUTH_SECRET=your-nextauth-secret
 ```
 
-### 2. Database & Types (2 minutes)
+### 2. UI Components Setup (3 minutes)
+
+```bash
+# Initialize ShadCN/UI configuration
+npx shadcn@latest init
+
+# Create components.json with KokonutUI registry
+echo '{
+  "registries": {
+    "@kokonutui": "https://kokonutui.com/r/{name}.json"
+  }
+}' >> components.json
+
+# Install base UI components
+npx shadcn@latest add button card modal input
+```
+
+### 3. Database & Types (2 minutes)
 
 ```bash
 # Generate PayloadCMS types
@@ -45,7 +62,7 @@ pnpm generate:types
 pnpm dev
 ```
 
-### 3. Initial Setup (5 minutes)
+### 4. Initial Setup (5 minutes)
 
 **Access admin interface**: http://localhost:3010/admin
 
@@ -56,7 +73,7 @@ pnpm dev
    - Sessions ✓
    - Media ✓
 
-### 4. Test Core Functionality (10 minutes)
+### 5. Test Core Functionality (10 minutes)
 
 #### Create Test Project
 1. Go to Projects collection

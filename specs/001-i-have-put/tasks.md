@@ -48,11 +48,11 @@
 - [x] T008 [P] Contract test POST /api/v1/chat/choice in `tests/contract/chat-choice.test.ts`
 - [x] T009 [P] Contract test POST /api/v1/chat/upload in `tests/contract/chat-upload.test.ts`
 - [x] T010 [P] Contract test GET /api/v1/chat/sessions in `tests/contract/chat-sessions.test.ts`
-- [ ] T011 [P] Contract test GET /api/v1/projects in `tests/contract/projects-list.test.ts`
-- [ ] T012 [P] Contract test POST /api/v1/projects in `tests/contract/projects-create.test.ts`
-- [ ] T013 [P] Contract test GET /api/v1/projects/{id} in `tests/contract/projects-get.test.ts`
+- [x] T011 [P] Contract test GET /api/v1/projects in `tests/contract/projects-list.test.ts`
+- [x] T012 [P] Contract test POST /api/v1/projects in `tests/contract/projects-create.test.ts`
+- [x] T013 [P] Contract test GET /api/v1/projects/{id} in `tests/contract/projects-get.test.ts`
 - [x] T014 [P] Contract test POST /api/v1/media/upload in `tests/contract/media-upload.test.ts`
-- [ ] T015 [P] Contract test GET /api/v1/media in `tests/contract/media-list.test.ts`
+- [x] T015 [P] Contract test GET /api/v1/media in `tests/contract/media-list.test.ts`
 - [x] T016 [P] Contract test WebSocket /api/v1/websocket events in `tests/contract/websocket-chat.test.ts`
 
 ### Integration Test Scenarios [P]
@@ -74,48 +74,48 @@
 ## Phase 3.4: API Routes Implementation
 
 ### Chat API Endpoints (v1 routing)
-- [ ] T027 POST /api/v1/chat/message endpoint in `app/api/v1/chat/message/route.ts`
-- [ ] T028 POST /api/v1/chat/choice endpoint in `app/api/v1/chat/choice/route.ts`
-- [ ] T029 POST /api/v1/chat/upload endpoint in `app/api/v1/chat/upload/route.ts`
-- [ ] T030 GET /api/v1/chat/session/[id] endpoint in `app/api/v1/chat/session/[id]/route.ts`
-- [ ] T031 GET /api/v1/chat/sessions endpoint in `app/api/v1/chat/sessions/route.ts`
+- [x] T027 POST /api/v1/chat/message endpoint in `app/api/v1/chat/message/route.ts`
+- [x] T028 POST /api/v1/chat/choice endpoint in `app/api/v1/chat/choice/route.ts`
+- [x] T029 POST /api/v1/chat/upload endpoint in `app/api/v1/chat/upload/route.ts`
+- [x] T030 GET /api/v1/chat/session/[id] endpoint in `app/api/v1/chat/session/[id]/route.ts`
+- [x] T031 GET /api/v1/chat/sessions endpoint in `app/api/v1/chat/sessions/route.ts`
 
 ### Projects API Endpoints (v1 routing)
-- [ ] T032 GET /api/v1/projects endpoint in `app/api/v1/projects/route.ts`
-- [ ] T033 POST /api/v1/projects endpoint in `app/api/v1/projects/route.ts`
-- [ ] T034 GET /api/v1/projects/[id] endpoint in `app/api/v1/projects/[id]/route.ts`
-- [ ] T035 PUT /api/v1/projects/[id] endpoint in `app/api/v1/projects/[id]/route.ts`
-- [ ] T036 POST /api/v1/projects/[id]/collaborators endpoint in `app/api/v1/projects/[id]/collaborators/route.ts`
+- [x] T032 GET /api/v1/projects endpoint in `app/api/v1/projects/route.ts`
+- [x] T033 POST /api/v1/projects endpoint in `app/api/v1/projects/route.ts`
+- [x] T034 GET /api/v1/projects/[id] endpoint in `app/api/v1/projects/[id]/route.ts`
+- [x] T035 PUT /api/v1/projects/[id] endpoint in `app/api/v1/projects/[id]/route.ts`
+- [x] T036 POST /api/v1/projects/[id]/collaborators endpoint in `app/api/v1/projects/[id]/collaborators/route.ts`
 
 ### Media API Endpoints (v1 routing)
-- [ ] T037 POST /api/v1/media/upload endpoint in `app/api/v1/media/upload/route.ts`
-- [ ] T038 GET /api/v1/media endpoint in `app/api/v1/media/route.ts`
-- [ ] T039 GET /api/v1/media/[id] endpoint in `app/api/v1/media/[id]/route.ts`
-- [ ] T040 POST /api/v1/media/search endpoint in `app/api/v1/media/search/route.ts`
+- [x] T037 POST /api/v1/media/upload endpoint in `app/api/v1/media/upload/route.ts`
+- [x] T038 GET /api/v1/media endpoint in `app/api/v1/media/route.ts`
+- [x] T039 GET /api/v1/media/[id] endpoint in `app/api/v1/media/[id]/route.ts`
+- [x] T040 POST /api/v1/media/search endpoint in `app/api/v1/media/search/route.ts`
 
 ## Phase 3.5: Real-Time Communication
 
-- [ ] T041 WebSocket server implementation in `app/api/v1/websocket/route.ts`
-- [ ] T042 WebSocket client service in `src/services/websocket.ts`
+- [x] T041 WebSocket server implementation in `app/api/v1/websocket/route.ts`
+- [x] T042 WebSocket client service in `src/services/websocket.ts`
 
 ## Phase 3.6: Dashboard Pages (Server Components)
 
 ### User-Facing Pages [P]
-- [ ] T043 [P] Homepage landing page in `app/page.tsx`
-- [ ] T044 [P] Dashboard layout in `app/dashboard/layout.tsx`
-- [ ] T045 [P] Project list page in `app/dashboard/projects/page.tsx`
-- [ ] T046 [P] Project detail page in `app/dashboard/projects/[id]/page.tsx`
-- [ ] T047 [P] Chat interface page in `app/dashboard/projects/[id]/chat/page.tsx`
+- [x] T043 [P] Homepage landing page in `app/page.tsx`
+- [x] T044 [P] Dashboard layout in `app/dashboard/layout.tsx`
+- [x] T045 [P] Project list page in `app/dashboard/projects/page.tsx`
+- [x] T046 [P] Project detail page in `app/dashboard/projects/[id]/page.tsx`
+- [x] T047 [P] Chat interface page in `app/dashboard/projects/[id]/chat/page.tsx`
 
 ## Phase 3.7: Chat Interface Components
 
 ### Client Components [P]
-- [ ] T048 [P] ChatInterface component in `src/components/chat/ChatInterface.tsx`
-- [ ] T049 [P] MessageList component in `src/components/chat/MessageList.tsx`
-- [ ] T050 [P] InputArea component in `src/components/chat/InputArea.tsx`
-- [ ] T051 [P] ChoiceSelector component in `src/components/chat/ChoiceSelector.tsx`
-- [ ] T052 [P] FileUpload component in `src/components/chat/FileUpload.tsx`
-- [ ] T053 [P] ProgressIndicator component in `src/components/chat/ProgressIndicator.tsx`
+- [x] T048 [P] ChatInterface component in `src/components/chat/ChatInterface.tsx`
+- [x] T049 [P] MessageList component in `src/components/chat/MessageList.tsx`
+- [x] T050 [P] InputArea component in `src/components/chat/InputArea.tsx`
+- [x] T051 [P] ChoiceSelector component in `src/components/chat/ChoiceSelector.tsx`
+- [x] T052 [P] FileUpload component in `src/components/chat/FileUpload.tsx`
+- [x] T053 [P] ProgressIndicator component in `src/components/chat/ProgressIndicator.tsx`
 
 ### UI Components [P]
 - [ ] T054 [P] Button component in `src/components/ui/Button.tsx`
@@ -126,26 +126,26 @@
 ## Phase 3.8: Services & Utilities
 
 ### Service Layer [P]
-- [ ] T058 [P] AI LLM service client in `src/services/novelLLM.ts`
-- [ ] T059 [P] Task service client in `src/services/taskService.ts`
-- [ ] T060 [P] Chat hook implementation in `src/hooks/useChat.ts`
-- [ ] T061 [P] WebSocket hook implementation in `src/hooks/useWebSocket.ts`
+- [x] T058 [P] AI LLM service client in `src/services/novelLLM.ts`
+- [x] T059 [P] Task service client in `src/services/taskService.ts`
+- [x] T060 [P] Chat hook implementation in `src/hooks/useChat.ts`
+- [x] T061 [P] WebSocket hook implementation in `src/hooks/useWebSocket.ts`
 
 ### Utility Functions [P]
-- [ ] T062 [P] LLM prompt templates in `src/utils/prompts.ts`
-- [ ] T063 [P] Input validators in `src/utils/validators.ts`
-- [ ] T064 [P] Response formatters in `src/utils/formatters.ts`
-- [ ] T065 [P] PayloadCMS utility functions in `src/utils/getPayload.ts`
+- [x] T062 [P] LLM prompt templates in `src/utils/prompts.ts`
+- [x] T063 [P] Input validators in `src/utils/validators.ts`
+- [x] T064 [P] Response formatters in `src/utils/formatters.ts`
+- [x] T065 [P] PayloadCMS utility functions in `src/utils/getPayload.ts`
 
 ## Phase 3.9: Integration & Security
 
-- [ ] T066 Authentication middleware for /api/v1/* routes
-- [ ] T067 File upload security and validation
-- [ ] T068 Rate limiting for chat endpoints
-- [ ] T069 Error handling and logging system
-- [ ] T070 PayloadCMS hooks for progress tracking
-- [ ] T071 AI service error handling and fallbacks
-- [ ] T072 Subscription limit validation middleware
+- [x] T066 Authentication middleware for /api/v1/* routes
+- [x] T067 File upload security and validation
+- [x] T068 Rate limiting for chat endpoints
+- [x] T069 Error handling and logging system
+- [x] T070 PayloadCMS hooks for progress tracking
+- [x] T071 AI service error handling and fallbacks
+- [x] T072 Subscription limit validation middleware
 
 ## Phase 3.10: Polish & Validation
 

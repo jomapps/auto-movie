@@ -1,8 +1,8 @@
 
 # Implementation Plan: AI Movie Platform Core with PayloadCMS and Chat Interface
 
-**Branch**: `001-i-have-put` | **Date**: 2025-01-25 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/001-i-have-put/spec.md`
+**Branch**: `001-i-have-put` | **Date**: 2025-09-25 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `D:\Projects\auto-movie\specs\001-i-have-put\spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,30 +31,47 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Build the central application foundation using PayloadCMS 3.5+ with extended collections, real-time chat interface, and AI LLM integration. This creates the user-facing platform that orchestrates the entire movie production workflow through a conversational interface, guiding users through structured phases from story development to final assembly while maintaining all project assets and progress tracking. CRITICAL: All API routes use `/api/v1/*` prefix and user pages use `/dashboard/*` routing per constitutional requirements.
+
+**Primary Requirement**: AI-powered movie production platform with real-time chat interface, guiding users through structured workflow phases (story development, character creation, visual design, production) with file upload capabilities and collaborative features.
+
+**Technical Approach**: Next.js 15.4+ App Router with PayloadCMS 3.56+ backend, ShadCN/UI + KokonutUI component system, WebSocket real-time communication, and Cloudflare R2 media storage. Server-first architecture with selective client components for interactivity, following constitutional requirements for PayloadCMS data layer supremacy and modern stack discipline.
 
 ## Technical Context
 **Language/Version**: TypeScript 5.7+, Node.js 18.20.2+  
-**Primary Dependencies**: PayloadCMS 3.56+, Next.js 15.4+, React 19.1+, MongoDB, Tailwind CSS 4+  
-**Storage**: MongoDB via PayloadCMS adapter, Cloudflare R2 for media assets  
-**Testing**: Vitest for unit/integration, Playwright for E2E  
-**Target Platform**: Web application (Next.js App Router)
-**Project Type**: web - Next.js full-stack application with PayloadCMS backend  
-**Performance Goals**: Real-time chat responsiveness, efficient file upload handling, AI processing feedback  
-**Constraints**: PayloadCMS data layer only, server-first components, `/api/v1/*` routing, `/dashboard/*` pages, constitutional compliance  
-**Scale/Scope**: Multi-user collaboration, media-rich projects, AI workflow orchestration
+**Primary Dependencies**: PayloadCMS 3.56+, Next.js 15.4+, React 19.1+, MongoDB, Tailwind CSS 4+, ShadCN/UI, KokonutUI  
+**Storage**: MongoDB (via PayloadCMS), Cloudflare R2 (media storage)  
+**Testing**: Vitest (unit/integration), Playwright (E2E)  
+**Target Platform**: Web application (Next.js)
+**Project Type**: web - Next.js App Router with frontend+backend integration  
+**Performance Goals**: Chat response <2s, file upload <10s for images, WebSocket real-time updates  
+**Constraints**: Server-first architecture, PayloadCMS data layer only, constitutional compliance  
+**Scale/Scope**: Multi-user AI movie production platform with chat interface, file uploads, and real-time collaboration
+**UI Framework**: ShadCN/UI with KokonutUI components, Tailwind CSS 4+, Lucide icons
+**User Context**: ShadCN/UI guidelines provided for component architecture and installation patterns
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**PayloadCMS Data Layer Supremacy**: ✅ PASS - All data access through PayloadCMS collections (Users, Projects, Sessions, Media)  
-**Server-First Architecture**: ✅ PASS - Next.js App Router with server components, client-side only for chat input/WebSocket  
-**Modern Stack Discipline**: ✅ PASS - PayloadCMS 3.56+, Tailwind CSS 4+, no new config files  
-**Configuration Immutability**: ✅ PASS - Using existing next.config.mjs, no new configuration files  
-**Real-Time First Design**: ✅ PASS - WebSocket integration for chat interface and progress tracking
-**Routing Structure Isolation**: ✅ PASS - API routes use `/api/v1/*` prefix, user pages use `/dashboard/*` routing
+**PayloadCMS Data Layer Compliance**:
+- [x] No direct database access - all data operations through PayloadCMS Local API
+- [x] Collection slugs follow kebab-case naming convention (users, projects, sessions, media)
+- [x] Uses Payload generated types from src/payload-types.ts exclusively
 
-**Constitutional Compliance**: All design decisions align with established principles including new routing isolation requirements.
+**Routing Structure Compliance**:
+- [x] Application routes use `/` and `/dashboard/*` only
+- [x] API routes use `/api/v1/*` prefix exclusively
+- [x] No usage of reserved `/admin/*` or `/api/*` paths
+
+**Collection Architecture Compliance**:
+- [x] Collections use CollectionConfig TypeScript interfaces (already implemented)
+- [x] Proper access control functions implemented
+- [x] Admin components configured via file paths not direct imports
+- [x] Storage adapters properly configured for uploads (Cloudflare R2)
+
+**Technology Stack Compliance**:
+- [x] PayloadCMS 3.56+ patterns used exclusively
+- [x] Next.js server components by default, client only when necessary (ShadCN/UI components)
+- [x] Tailwind CSS 4+ for all styling with ShadCN/UI integration
 
 ## Project Structure
 
@@ -106,7 +123,38 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Next.js App Router structure - app/ directory for pages and API routes, src/ for PayloadCMS collections and components. User pages in app/dashboard/, API routes in app/api/v1/
+**Structure Decision**: Next.js App Router structure - web application with integrated frontend/backend
+
+```
+# Next.js App Router Structure (SELECTED)
+app/
+├── page.tsx                 # Homepage
+├── dashboard/              
+│   ├── layout.tsx          # Dashboard layout
+│   ├── projects/
+│   │   ├── page.tsx       # Project list
+│   │   └── [id]/
+│   │       ├── page.tsx   # Project detail
+│   │       └── chat/
+│   │           └── page.tsx # Chat interface
+│   └── api/v1/            # API routes
+│       ├── chat/          # Chat endpoints
+│       ├── projects/      # Project endpoints  
+│       └── media/         # Media endpoints
+
+src/
+├── collections/           # PayloadCMS collections
+├── components/           
+│   ├── ui/               # ShadCN/UI base components
+│   ├── kokonutui/        # KokonutUI components
+│   └── chat/             # Chat-specific components
+├── hooks/                # React hooks
+├── services/             # API clients
+├── utils/                # Utilities
+└── payload-types.ts      # Generated types
+
+components.json           # ShadCN/UI configuration
+```
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -162,23 +210,35 @@ ios/ or android/
 
 **Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
 
-## Phase 2: Task Planning Approach
+## Phase 2: Task Planning Approach  
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- Each contract → contract test task [P] (already some implemented)
+- Each entity → PayloadCMS collection verification
+- Each user story → integration test task  
+- ShadCN/UI component installation and configuration tasks
+- KokonutUI integration tasks for advanced components
+- WebSocket implementation tasks for real-time features
+- Dashboard page creation tasks following Next.js App Router patterns
+
+**UI Component Strategy**:
+- Setup ShadCN/UI base components (button, card, modal, input)
+- Configure KokonutUI registry and install particle buttons for enhanced UX
+- Create chat interface components using component library patterns
+- Implement drag-and-drop file upload with visual feedback
+- Build progress indicators and loading states
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
+- TDD order: Tests before implementation
+- Infrastructure: ShadCN/UI setup → Component creation → Page assembly
+- Dependency order: Collections (done) → API routes → Components → Pages
 - Mark [P] for parallel execution (independent files)
+- WebSocket implementation before real-time components
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 35-40 numbered, ordered tasks in tasks.md including UI component setup
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -202,8 +262,8 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 0: Research complete (/plan command) - ShadCN/UI + KokonutUI integration documented
+- [x] Phase 1: Design complete (/plan command) - Data model, contracts, quickstart ready
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
@@ -211,9 +271,9 @@ ios/ or android/
 
 **Gate Status**:
 - [x] Initial Constitution Check: PASS
-- [x] Post-Design Constitution Check: PASS (constitutional compliance verified)
-- [x] All NEEDS CLARIFICATION resolved (in research.md)
-- [x] Complexity deviations documented (none required)
+- [x] Post-Design Constitution Check: PASS - ShadCN/UI integration aligns with Tailwind CSS 4+ requirement
+- [x] All NEEDS CLARIFICATION resolved - UI framework decisions documented in research.md
+- [x] Complexity deviations documented - No violations found
 
 ---
-*Based on Constitution v1.1.0 - See `.specify/memory/constitution.md`*
+*Based on Constitution v1.2.0 - See `/memory/constitution.md`*

@@ -57,15 +57,23 @@ This document resolves technical unknowns and documents architectural decisions 
 - Embedded AI models (rejected: resource constraints)
 
 ### Component Architecture
-**Decision**: Server-first with selective client components  
+**Decision**: Server-first with ShadCN/UI + KokonutUI component library  
 **Rationale**:
 - Constitutional requirement for server-first architecture
-- Better performance and SEO optimization
-- Reduced JavaScript bundle size
+- ShadCN/UI provides solid Tailwind CSS 4+ foundation
+- KokonutUI offers advanced components (particle buttons, animations)
+- CLI-based installation ensures proper dependencies
+- Strong TypeScript support and accessibility features
 - Client components only for interactive features (chat input, WebSocket)
+**Implementation Details**:
+- Configure `components.json` with KokonutUI registry
+- Use Lucide icons for consistency
+- Structure: `/src/components/ui/` (ShadCN) + `/src/components/kokonutui/` (KokonutUI)
 **Alternatives considered**:
 - Full client-side React app (rejected: violates constitution)
 - Pure server-side rendering (rejected: limits real-time features)
+- Material-UI (rejected: heavy bundle, design constraints)
+- Ant Design (rejected: Tailwind conflicts)
 
 ### Styling Strategy
 **Decision**: Tailwind CSS 4+ with component-scoped utilities  

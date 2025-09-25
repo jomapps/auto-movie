@@ -15,7 +15,10 @@
       "Bash(cat:*)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm test)",
+      "mcp__byterover-mcp__byterover-retrieve-knowledge",
+      "mcp__byterover-mcp__byterover-store-knowledge"
     ],
     "deny": [],
     "ask": []
