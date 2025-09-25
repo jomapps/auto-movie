@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.specify/scripts/powershell/create-new-feature.ps1 -Json \"I have put my requirements in docs\\thoughts\\auto-movie-idea.md\")",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(.specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "Bash(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json)",
+      "Bash(pnpm test:*)",
+      "WebSearch",
+      "WebFetch(domain:payloadcms.com)",
+      "Bash(pnpm generate:types:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
