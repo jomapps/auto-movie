@@ -47,7 +47,26 @@
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+**PayloadCMS Data Layer Compliance**:
+- [ ] No direct database access - all data operations through PayloadCMS Local API
+- [ ] Collection slugs follow kebab-case naming convention
+- [ ] Uses Payload generated types from src/payload-types.ts exclusively
+
+**Routing Structure Compliance**:
+- [ ] Application routes use `/` and `/dashboard/*` only
+- [ ] API routes use `/api/v1/*` prefix exclusively
+- [ ] No usage of reserved `/admin/*` or `/api/*` paths
+
+**Collection Architecture Compliance**:
+- [ ] Collections use CollectionConfig TypeScript interfaces
+- [ ] Proper access control functions implemented
+- [ ] Admin components configured via file paths not direct imports
+- [ ] Storage adapters properly configured for uploads
+
+**Technology Stack Compliance**:
+- [ ] PayloadCMS 3.56+ patterns used exclusively
+- [ ] Next.js server components by default, client only when necessary
+- [ ] Tailwind CSS 4+ for all styling
 
 ## Project Structure
 
@@ -209,4 +228,4 @@ ios/ or android/
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+*Based on Constitution v1.2.0 - See `/memory/constitution.md`*

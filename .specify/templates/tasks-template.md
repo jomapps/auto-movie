@@ -49,46 +49,52 @@
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T004 [P] Contract test POST /api/users in tests/contract/test_users_post.py
-- [ ] T005 [P] Contract test GET /api/users/{id} in tests/contract/test_users_get.py
-- [ ] T006 [P] Integration test user registration in tests/integration/test_registration.py
-- [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
+- [ ] T004 [P] Contract test POST /api/v1/users in tests/contract/test_users_post.py
+- [ ] T005 [P] Contract test GET /api/v1/users/{id} in tests/contract/test_users_get.py
+- [ ] T006 [P] PayloadCMS collection configuration test in tests/contract/test_collections.py
+- [ ] T007 [P] Integration test user registration via Payload Local API in tests/integration/test_registration.py
+- [ ] T008 [P] Integration test auth flow with PayloadCMS in tests/integration/test_auth.py
+- [ ] T009 [P] Generated types validation test in tests/contract/test_payload_types.py
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T008 [P] User model in src/models/user.py
-- [ ] T009 [P] UserService CRUD in src/services/user_service.py
-- [ ] T010 [P] CLI --create-user in src/cli/user_commands.py
-- [ ] T011 POST /api/users endpoint
-- [ ] T012 GET /api/users/{id} endpoint
-- [ ] T013 Input validation
-- [ ] T014 Error handling and logging
+- [ ] T010 [P] PayloadCMS collection configuration in src/collections/Users.ts
+- [ ] T011 [P] PayloadCMS collection configuration in src/collections/[Entity].ts
+- [ ] T012 [P] Generate Payload types via pnpm generate:types
+- [ ] T013 POST /api/v1/users endpoint using Payload Local API
+- [ ] T014 GET /api/v1/users/{id} endpoint using Payload Local API
+- [ ] T015 Input validation using PayloadCMS field validation
+- [ ] T016 Error handling with PayloadCMS access control
 
 ## Phase 3.4: Integration
-- [ ] T015 Connect UserService to DB
-- [ ] T016 Auth middleware
-- [ ] T017 Request/response logging
-- [ ] T018 CORS and security headers
+- [ ] T017 Configure PayloadCMS database adapter (MongoDB)
+- [ ] T018 Setup PayloadCMS authentication middleware
+- [ ] T019 Request/response logging for Payload Local API calls
+- [ ] T020 CORS and security headers via Next.js configuration
 
 ## Phase 3.5: Polish
-- [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
-- [ ] T020 Performance tests (<200ms)
-- [ ] T021 [P] Update docs/api.md
-- [ ] T022 Remove duplication
-- [ ] T023 Run manual-testing.md
+- [ ] T021 [P] Unit tests for PayloadCMS collection validation in tests/unit/test_collections.py
+- [ ] T022 Performance tests for Payload Local API calls (<200ms)
+- [ ] T023 [P] Update docs/api.md with PayloadCMS endpoints
+- [ ] T024 [P] Verify generated types are current via pnpm generate:types
+- [ ] T025 Remove duplication and validate PayloadCMS patterns
+- [ ] T026 Run manual-testing.md with Payload admin panel verification
 
 ## Dependencies
-- Tests (T004-T007) before implementation (T008-T014)
-- T008 blocks T009, T015
-- T016 blocks T018
-- Implementation before polish (T019-T023)
+- Tests (T004-T009) before implementation (T010-T016)
+- T010-T011 (collections) block T012 (generate types)
+- T012 (generate types) blocks T013-T016 (API endpoints)
+- T017-T018 (PayloadCMS setup) blocks T019-T020 (integration)
+- Implementation before polish (T021-T026)
 
 ## Parallel Example
 ```
-# Launch T004-T007 together:
-Task: "Contract test POST /api/users in tests/contract/test_users_post.py"
-Task: "Contract test GET /api/users/{id} in tests/contract/test_users_get.py"
-Task: "Integration test registration in tests/integration/test_registration.py"
-Task: "Integration test auth in tests/integration/test_auth.py"
+# Launch T004-T009 together:
+Task: "Contract test POST /api/v1/users in tests/contract/test_users_post.py"
+Task: "Contract test GET /api/v1/users/{id} in tests/contract/test_users_get.py"
+Task: "PayloadCMS collection configuration test in tests/contract/test_collections.py"
+Task: "Integration test registration via Payload Local API in tests/integration/test_registration.py"
+Task: "Integration test auth with PayloadCMS in tests/integration/test_auth.py"
+Task: "Generated types validation test in tests/contract/test_payload_types.py"
 ```
 
 ## Notes
@@ -102,26 +108,36 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 
 1. **From Contracts**:
    - Each contract file → contract test task [P]
-   - Each endpoint → implementation task
+   - Each endpoint → PayloadCMS Local API implementation task
    
 2. **From Data Model**:
-   - Each entity → model creation task [P]
-   - Relationships → service layer tasks
+   - Each entity → PayloadCMS collection configuration task [P]
+   - Generate types task after all collections defined
+   - Relationships → collection relationship configuration
    
 3. **From User Stories**:
-   - Each story → integration test [P]
-   - Quickstart scenarios → validation tasks
+   - Each story → integration test using PayloadCMS Local API [P]
+   - Quickstart scenarios → Payload admin panel validation tasks
 
-4. **Ordering**:
-   - Setup → Tests → Models → Services → Endpoints → Polish
+4. **PayloadCMS-Specific Rules**:
+   - Collection configurations before type generation
+   - Type generation before API endpoint implementation
+   - Access control tests for each collection
+   - Upload configurations for media entities
+
+5. **Ordering**:
+   - Setup → Tests → Collections → Generate Types → Endpoints → Polish
    - Dependencies block parallel execution
 
 ## Validation Checklist
 *GATE: Checked by main() before returning*
 
-- [ ] All contracts have corresponding tests
-- [ ] All entities have model tasks
+- [ ] All contracts have corresponding PayloadCMS Local API tests
+- [ ] All entities have PayloadCMS collection configuration tasks
+- [ ] Type generation task included after collection tasks
+- [ ] All API endpoints use /api/v1/* prefix
 - [ ] All tests come before implementation
+- [ ] Access control tests for each collection
 - [ ] Parallel tasks truly independent
 - [ ] Each task specifies exact file path
 - [ ] No task modifies same file as another [P] task
