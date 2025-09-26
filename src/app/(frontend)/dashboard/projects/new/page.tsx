@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createProject } from '@/actions/create-project'
 import { ProjectForm } from '@/components/forms/ProjectForm'
 import { ProjectFormErrorBoundary } from '@/components/ui/ErrorBoundary'
@@ -28,6 +29,11 @@ export default async function NewProjectPage() {
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to create project')
+    }
+
+    // Redirect to the new project page
+    if (result.redirectTo) {
+      redirect(result.redirectTo)
     }
   }
 

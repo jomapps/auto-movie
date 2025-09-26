@@ -12,6 +12,7 @@ export interface CreateProjectState {
   success?: boolean
   error?: string
   data?: Partial<Project>
+  redirectTo?: string
 }
 
 export async function createProject(
@@ -96,8 +97,12 @@ export async function createProject(
     revalidatePath('/dashboard/projects')
     revalidatePath('/dashboard/projects/new')
 
-    // Redirect to the new project page
-    redirect(`/dashboard/projects/${result.id}`)
+    // Return success with the project ID for redirect
+    return {
+      success: true,
+      data: result,
+      redirectTo: `/dashboard/projects/${result.id}`,
+    }
   } catch (error) {
     console.error('Create project error:', error)
 
