@@ -18,6 +18,7 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@payloadcms/db-mongodb": "3.56.0",
     "@payloadcms/next": "3.56.0",
     "@payloadcms/payload-cloud": "3.56.0",
@@ -30,6 +31,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
+    "date-fns": "^4.1.0",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
     "lucide-react": "^0.544.0",
@@ -38,10 +40,13 @@
     "postcss": "^8.5.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hook-form": "^7.63.0",
+    "react-hot-toast": "^2.6.0",
     "sharp": "0.34.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.13",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@playwright/test": "1.54.1",

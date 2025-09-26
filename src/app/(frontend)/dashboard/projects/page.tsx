@@ -1,169 +1,134 @@
-import { getPayload } from 'payload'
-import config from '@/payload.config'
+import React, { Suspense } from 'react'
 import Link from 'next/link'
+import { listProjects } from '@/actions/list-projects'
+import { ProjectCard } from '@/components/projects/ProjectCard'
+import { ProjectFilters } from '@/components/projects/ProjectFilters'
+import { NoProjectsFound, LoadingProjects } from '@/components/ui/EmptyState'
+import type { Project } from '@/payload-types'
 
-interface Project {
-  id: string
-  title: string
-  description: string
-  genre: string
-  status: string
-  progress: {
-    overallProgress: number
-    currentPhase: string
+interface ProjectsPageProps {
+  searchParams: {
+    page?: string
+    search?: string
+    genre?: string
+    status?: string
+    targetAudience?: string
+    sort?: string
+    progressMin?: string
+    progressMax?: string
+    episodeCountMin?: string
+    episodeCountMax?: string
   }
-  createdAt: string
-  updatedAt: string
 }
 
-export default async function ProjectsPage() {
-  let projects: Project[] = []
-  
-  try {
-    const payload = await getPayload({ config })
-    const result = await payload.find({
-      collection: 'projects',
-      limit: 50,
-      sort: '-updatedAt',
-    })
-    projects = result.docs as Project[]
-  } catch (error) {
-    console.error('Error fetching projects:', error)
+async function ProjectsList({ searchParams }: { searchParams: ProjectsPageProps['searchParams'] }) {
+  const page = parseInt(searchParams.page || '1')
+  const limit = 12
+
+  const result = await listProjects({
+    page,
+    limit,
+    sort: searchParams.sort,
+    search: searchParams.search,
+    genre: searchParams.genre,
+    status: searchParams.status,
+    targetAudience: searchParams.targetAudience,
+    progressMin: searchParams.progressMin ? parseInt(searchParams.progressMin) : undefined,
+    progressMax: searchParams.progressMax ? parseInt(searchParams.progressMax) : undefined,
+    episodeCountMin: searchParams.episodeCountMin ? parseInt(searchParams.episodeCountMin) : undefined,
+    episodeCountMax: searchParams.episodeCountMax ? parseInt(searchParams.episodeCountMax) : undefined
+  })
+
+  if (!result.success || !result.data) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+        <h3 className="text-red-800 dark:text-red-200 font-semibold mb-2">Failed to load projects</h3>
+        <p className="text-red-700 dark:text-red-300">{result.error || 'An unexpected error occurred.'}</p>
+      </div>
+    )
   }
 
+  const { docs: projects, totalDocs, totalPages, hasNextPage, hasPrevPage } = result.data
+  const hasFilters = Object.entries(searchParams).some(([key, value]) => 
+    key !== 'page' && key !== 'sort' && value && value !== ''
+  )
+
+  if (projects.length === 0) {
+    return <NoProjectsFound hasFilters={hasFilters} />
+  }
+
+  return (
+    <>
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {projects.map((project) => (
+          <ProjectCard key={project.id} project={project as Project} />
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white dark:bg-gray-800 px-6 py-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalDocs)} of {totalDocs} projects
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {hasPrevPage && (
+              <Link
+                href={`?${new URLSearchParams({ ...searchParams, page: (page - 1).toString() })}`}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                Previous
+              </Link>
+            )}
+            
+            <span className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+              Page {page} of {totalPages}
+            </span>
+            
+            {hasNextPage && (
+              <Link
+                href={`?${new URLSearchParams({ ...searchParams, page: (page + 1).toString() })}`}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                Next
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Projects</h1>
-          <p className="text-slate-400 mt-1">Manage your movie projects</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Projects</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your movie projects</p>
         </div>
-        <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
+        <Link
+          href="/dashboard/projects/new"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           New Project
-        </button>
+        </Link>
       </div>
 
-      {/* Projects Grid */}
-      {projects.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div key={project.id} className="bg-slate-800 rounded-lg p-6 hover:bg-slate-700 transition-colors">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white text-lg mb-2">{project.title}</h3>
-                  <p className="text-slate-400 text-sm line-clamp-2 mb-3">
-                    {project.description || 'No description provided'}
-                  </p>
-                </div>
-              </div>
+      {/* Filters */}
+      <ProjectFilters initialFilters={searchParams} />
 
-              {/* Genre & Status */}
-              <div className="flex items-center gap-2 mb-4">
-                <span className="bg-purple-600/20 text-purple-400 px-2 py-1 rounded text-xs">
-                  {project.genre}
-                </span>
-                <span className="bg-slate-600/50 text-slate-300 px-2 py-1 rounded text-xs">
-                  {project.status}
-                </span>
-              </div>
-
-              {/* Progress */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-slate-400 text-sm">Progress</span>
-                  <span className="text-slate-300 text-sm">
-                    {project.progress?.overallProgress || 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2">
-                  <div 
-                    className="bg-purple-600 h-2 rounded-full"
-                    style={{ width: `${project.progress?.overallProgress || 0}%` }}
-                  ></div>
-                </div>
-                {project.progress?.currentPhase && (
-                  <p className="text-slate-400 text-xs mt-1">
-                    Current: {project.progress.currentPhase}
-                  </p>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Link 
-                  href={`/dashboard/projects/${project.id}`}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm text-center transition-colors"
-                >
-                  View Details
-                </Link>
-                <Link 
-                  href={`/dashboard/projects/${project.id}/chat`}
-                  className="flex-1 border border-slate-600 text-slate-300 hover:bg-slate-600 px-4 py-2 rounded text-sm text-center transition-colors"
-                >
-                  Chat
-                </Link>
-              </div>
-
-              {/* Timestamps */}
-              <div className="mt-4 pt-4 border-t border-slate-700">
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Created: {new Date(project.createdAt).toLocaleDateString()}</span>
-                  <span>Updated: {new Date(project.updatedAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <div className="text-6xl mb-6">🎬</div>
-          <h2 className="text-2xl font-bold text-white mb-4">No Projects Yet</h2>
-          <p className="text-slate-400 mb-8 max-w-md mx-auto">
-            Start your creative journey by creating your first movie project. 
-            Our AI will guide you through the entire production process.
-          </p>
-          <div className="space-y-4">
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              Create Your First Project
-            </button>
-            <div className="text-slate-400 text-sm">
-              <p>Or explore sample projects to get started</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Stats */}
-      {projects.length > 0 && (
-        <div className="bg-slate-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Project Overview</h2>
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{projects.length}</div>
-              <div className="text-slate-400 text-sm">Total Projects</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">
-                {projects.filter(p => p.status === 'active').length}
-              </div>
-              <div className="text-slate-400 text-sm">Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">
-                {projects.filter(p => p.status === 'completed').length}
-              </div>
-              <div className="text-slate-400 text-sm">Completed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">
-                {Math.round(projects.reduce((acc, p) => acc + (p.progress?.overallProgress || 0), 0) / projects.length) || 0}%
-              </div>
-              <div className="text-slate-400 text-sm">Avg Progress</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Projects List with Loading State */}
+      <Suspense fallback={<LoadingProjects />}>
+        <ProjectsList searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }

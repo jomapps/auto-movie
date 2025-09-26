@@ -6,6 +6,8 @@ Auto-generated from all feature plans. Last updated: 2025-09-25
 - TypeScript 5.7+, Node.js 18.20.2+ + PayloadCMS 3.56+, Next.js 15.4+, React 19.1+, MongoDB, Tailwind CSS 4+ (001-i-have-put)
 - TypeScript 5.7+, Node.js 18.20.2+ + PayloadCMS 3.56+, Next.js 15.4+, React 19.1+, MongoDB, Tailwind CSS 4+, ShadCN/UI, KokonutUI (001-i-have-put)
 - MongoDB (via PayloadCMS), Cloudflare R2 (media storage) (001-i-have-put)
+- TypeScript 5.7+, Node.js 18.20.2+ + Next.js 15.4+, React 19.1+, PayloadCMS 3.56+, Tailwind CSS 4+ (002-now-that-we)
+- TypeScript 5.7+, Node.js 18.20.2+ + Next.js 15.4+, React 19.1+, PayloadCMS 3.56+, Tailwind CSS 4+, React Hook Form, Zod (002-now-that-we)
 
 ## Project Structure
 ```
@@ -21,8 +23,9 @@ npm test; npm run lint
 TypeScript 5.7+, Node.js 18.20.2+: Follow standard conventions
 
 ## Recent Changes
+- 002-now-that-we: Added TypeScript 5.7+, Node.js 18.20.2+ + Next.js 15.4+, React 19.1+, PayloadCMS 3.56+, Tailwind CSS 4+, React Hook Form, Zod
+- 002-now-that-we: Added TypeScript 5.7+, Node.js 18.20.2+ + Next.js 15.4+, React 19.1+, PayloadCMS 3.56+, Tailwind CSS 4+
 - 001-i-have-put: Added TypeScript 5.7+, Node.js 18.20.2+ + PayloadCMS 3.56+, Next.js 15.4+, React 19.1+, MongoDB, Tailwind CSS 4+, ShadCN/UI, KokonutUI
-- 001-i-have-put: Added TypeScript 5.7+, Node.js 18.20.2+ + PayloadCMS 3.56+, Next.js 15.4+, React 19.1+, MongoDB, Tailwind CSS 4+
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

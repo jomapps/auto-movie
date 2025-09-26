@@ -1,0 +1,406 @@
+openapi: 3.0.3
+info:
+  title: Projects Interface API
+  description: API contracts for project management operations
+  version: 1.0.0
+  
+servers:
+  - url: /api/v1
+    description: Local API server
+
+paths:
+  /projects:
+    get:
+      summary: List user's projects
+      description: Retrieve all projects accessible to the current user
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: ['-updatedAt', '-createdAt', 'title', 'status', 'progress.overallProgress']
+            default: '-updatedAt'
+        - in: query
+          name: genre
+          schema:
+            type: string
+            enum: ['action', 'comedy', 'drama', 'horror', 'sci-fi', 'thriller', 'romance', 'documentary']
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: ['concept', 'pre-production', 'production', 'post-production', 'completed', 'on-hold']
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  totalDocs:
+                    type: integer
+                  limit:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  page:
+                    type: integer
+                  hasPrevPage:
+                    type: boolean
+                  hasNextPage:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    
+    post:
+      summary: Create new project
+      description: Create a new project for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /projects/{projectId}:
+    get:
+      summary: Get project by ID
+      description: Retrieve a specific project by its ID
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    
+    put:
+      summary: Update project
+      description: Update an existing project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique project identifier
+        title:
+          type: string
+          description: Project title
+        description:
+          type: string
+          nullable: true
+          description: Project description
+        genre:
+          type: string
+          enum: ['action', 'comedy', 'drama', 'horror', 'sci-fi', 'thriller', 'romance', 'documentary']
+          description: Project genre
+        episodeCount:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Number of episodes
+        targetAudience:
+          type: string
+          enum: ['children', 'family', 'teen', 'adult']
+          description: Target audience rating
+        status:
+          type: string
+          enum: ['concept', 'pre-production', 'production', 'post-production', 'completed', 'on-hold']
+          description: Current project status
+        createdBy:
+          $ref: '#/components/schemas/UserReference'
+        collaborators:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserReference'
+          description: Users who can edit this project
+        styleReferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaReference'
+          description: Reference images for visual style
+        projectSettings:
+          $ref: '#/components/schemas/ProjectSettings'
+        progress:
+          $ref: '#/components/schemas/ProjectProgress'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - genre
+        - episodeCount
+        - status
+        - createdBy
+        - createdAt
+        - updatedAt
+
+    CreateProjectRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        genre:
+          type: string
+          enum: ['action', 'comedy', 'drama', 'horror', 'sci-fi', 'thriller', 'romance', 'documentary']
+        episodeCount:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        targetAudience:
+          type: string
+          enum: ['children', 'family', 'teen', 'adult']
+          default: 'family'
+        collaborators:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs
+        projectSettings:
+          $ref: '#/components/schemas/ProjectSettings'
+      required:
+        - title
+        - genre
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        genre:
+          type: string
+          enum: ['action', 'comedy', 'drama', 'horror', 'sci-fi', 'thriller', 'romance', 'documentary']
+        episodeCount:
+          type: integer
+          minimum: 1
+          maximum: 50
+        targetAudience:
+          type: string
+          enum: ['children', 'family', 'teen', 'adult']
+        status:
+          type: string
+          enum: ['concept', 'pre-production', 'production', 'post-production', 'completed', 'on-hold']
+        collaborators:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs
+        projectSettings:
+          $ref: '#/components/schemas/ProjectSettings'
+
+    ProjectSettings:
+      type: object
+      properties:
+        aspectRatio:
+          type: string
+          enum: ['16:9', '4:3', '21:9']
+          default: '16:9'
+        episodeDuration:
+          type: integer
+          default: 22
+          description: Target duration per episode in minutes
+        qualityTier:
+          type: string
+          enum: ['draft', 'standard', 'premium']
+          default: 'standard'
+
+    ProjectProgress:
+      type: object
+      properties:
+        currentPhase:
+          type: string
+          enum: ['story_development', 'character_creation', 'visual_design', 'audio_design', 'scene_production', 'post_production', 'final_assembly']
+          default: 'story_development'
+        completedSteps:
+          type: array
+          items:
+            type: object
+          default: []
+        overallProgress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 0
+
+    UserReference:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+      required:
+        - id
+        - email
+
+    MediaReference:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        mimeType:
+          type: string
+        filesize:
+          type: integer
+      required:
+        - id
+        - filename
+
+  responses:
+    BadRequest:
+      description: Bad request - validation errors
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Authentication required"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Insufficient permissions to access this project"
+
+    NotFound:
+      description: Not found - resource does not exist
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Project not found"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Internal server error"

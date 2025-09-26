@@ -31,7 +31,9 @@
       "Bash(npm:*)",
       "Bash(pnpm:*)",
       "Bash(mongod:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(.specify/scripts/powershell/create-new-feature.ps1 -Json \"Now that we have basic structure, I would like to wire up the interface, form, listing, editing and seleciton of Projects.\")",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)"
     ],
     "deny": [],
     "ask": []

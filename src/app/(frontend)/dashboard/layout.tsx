@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ReactNode } from 'react'
+import { Toaster } from '@/components/ui/Toast'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -97,6 +98,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </div>
+      
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   )
 }

@@ -1,98 +1,169 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from "vitest"
+import { getPayload } from "payload"
+import config from "@payload-config"
 
-describe('Project Creation Flow Integration', () => {
-  let testUser: any
-  let authToken: string
+// Integration test for PayloadCMS Local API project creation
+// This test MUST fail until the server actions are implemented
+
+describe("Project Creation Integration", () => {
+  let payload: any
 
   beforeEach(async () => {
-    // Setup test user (this will fail until PayloadCMS is implemented)
-    testUser = {
-      email: 'testuser@example.com',
-      name: 'Test User',
-      role: 'user',
+    // Initialize PayloadCMS for testing
+    payload = await getPayload({ config })
+    
+    // Clean up any existing test projects
+    const testProjects = await payload.find({
+      collection: "projects",
+      where: {
+        title: {
+          like: "Test Project%"
+        }
+      }
+    })
+    
+    for (const project of testProjects.docs) {
+      await payload.delete({
+        collection: "projects",
+        id: project.id
+      })
     }
-    authToken = 'test-auth-token'
   })
 
-  it('should complete new user project creation workflow', async () => {
-    // Step 1: User creates account (handled by PayloadCMS auth)
+  afterEach(async () => {
+    // Clean up test data
+    const testProjects = await payload.find({
+      collection: "projects",
+      where: {
+        title: {
+          like: "Test Project%"
+        }
+      }
+    })
     
-    // Step 2: User creates first project
-    const projectData = {
-      title: 'My First AI Movie',
-      description: 'A test project for the AI movie platform',
-      genre: 'action',
-      episodeCount: 5,
-      targetAudience: 'teen',
+    for (const project of testProjects.docs) {
+      await payload.delete({
+        collection: "projects",
+        id: project.id
+      })
     }
-
-    const createResponse = await fetch('http://localhost:3010/api/v1/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-      },
-      body: JSON.stringify(projectData),
-    })
-
-    expect(createResponse.status).toBe(201)
-    const project = await createResponse.json()
-    expect(project).toHaveProperty('id')
-    
-    // Step 3: User accesses chat interface
-    const chatPageResponse = await fetch(`http://localhost:3010/dashboard/projects/${project.id}/chat`, {
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-      },
-    })
-
-    expect(chatPageResponse.status).toBe(200)
-    
-    // Step 4: System presents initial choices
-    const messageResponse = await fetch('http://localhost:3010/api/v1/chat/message', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({
-        projectId: project.id,
-        message: 'I want to start developing my movie concept',
-      }),
-    })
-
-    expect(messageResponse.status).toBe(200)
-    const chatData = await messageResponse.json()
-    
-    // Expected: Project created, session active, choices presented
-    expect(chatData).toHaveProperty('sessionId')
-    expect(chatData).toHaveProperty('response')
-    expect(chatData).toHaveProperty('choices')
-    expect(chatData.choices.length).toBeGreaterThan(0)
-    expect(chatData.currentStep).toBeDefined()
   })
 
-  it('should enforce subscription limits for free tier users', async () => {
-    // Attempt to create project beyond free tier limit
+  it("should create a project with valid data using PayloadCMS Local API", async () => {
     const projectData = {
-      title: 'Second Project',
-      genre: 'comedy',
-      episodeCount: 3,
+      title: "Test Project Creation",
+      description: "A test project for integration testing",
+      genre: "drama",
+      episodeCount: 12,
+      targetAudience: "family",
+      projectSettings: {
+        aspectRatio: "16:9",
+        episodeDuration: 25,
+        qualityTier: "standard"
+      },
+      // Mock user relationship - this will need actual user ID in implementation
+      createdBy: "mock-user-id"
     }
 
-    const response = await fetch('http://localhost:3010/api/v1/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`, // Free tier user
-      },
-      body: JSON.stringify(projectData),
+    const result = await payload.create({
+      collection: "projects",
+      data: projectData
     })
 
-    // Should be rejected if user already has max projects
-    if (response.status === 403) {
-      const errorData = await response.json()
-      expect(errorData.error).toBe('Subscription limit exceeded')
+    expect(result).toBeDefined()
+    expect(result.title).toBe(projectData.title)
+    expect(result.description).toBe(projectData.description)
+    expect(result.genre).toBe(projectData.genre)
+    expect(result.episodeCount).toBe(projectData.episodeCount)
+    expect(result.targetAudience).toBe(projectData.targetAudience)
+    expect(result.projectSettings.aspectRatio).toBe(projectData.projectSettings.aspectRatio)
+    expect(result.id).toBeDefined()
+    expect(result.createdAt).toBeDefined()
+    expect(result.updatedAt).toBeDefined()
+  })
+
+  it("should fail to create project with missing required fields", async () => {
+    const invalidProjectData = {
+      description: "Missing title and genre",
+      episodeCount: 10
     }
+
+    await expect(
+      payload.create({
+        collection: "projects",
+        data: invalidProjectData
+      })
+    ).rejects.toThrow()
+  })
+
+  it("should fail to create project with invalid genre", async () => {
+    const invalidProjectData = {
+      title: "Test Project Invalid Genre",
+      genre: "invalid-genre",
+      episodeCount: 10,
+      createdBy: "mock-user-id"
+    }
+
+    await expect(
+      payload.create({
+        collection: "projects",
+        data: invalidProjectData
+      })
+    ).rejects.toThrow()
+  })
+
+  it("should fail to create project with episode count out of range", async () => {
+    const invalidProjectData = {
+      title: "Test Project Invalid Episodes",
+      genre: "drama",
+      episodeCount: 100, // Exceeds maximum of 50
+      createdBy: "mock-user-id"
+    }
+
+    await expect(
+      payload.create({
+        collection: "projects",
+        data: invalidProjectData
+      })
+    ).rejects.toThrow()
+  })
+
+  it("should create project with default values for optional fields", async () => {
+    const minimalProjectData = {
+      title: "Test Project Minimal",
+      genre: "comedy",
+      createdBy: "mock-user-id"
+    }
+
+    const result = await payload.create({
+      collection: "projects",
+      data: minimalProjectData
+    })
+
+    expect(result.title).toBe(minimalProjectData.title)
+    expect(result.genre).toBe(minimalProjectData.genre)
+    expect(result.episodeCount).toBe(10) // Default value
+    expect(result.targetAudience).toBe("family") // Default value
+    expect(result.projectSettings.aspectRatio).toBe("16:9") // Default value
+    expect(result.projectSettings.episodeDuration).toBe(22) // Default value
+    expect(result.projectSettings.qualityTier).toBe("standard") // Default value
+  })
+
+  it("should initialize progress tracking with default values", async () => {
+    const projectData = {
+      title: "Test Project Progress",
+      genre: "action",
+      createdBy: "mock-user-id"
+    }
+
+    const result = await payload.create({
+      collection: "projects",
+      data: projectData
+    })
+
+    expect(result.progress).toBeDefined()
+    expect(result.progress.currentPhase).toBe("story_development") // Default phase
+    expect(result.progress.completedSteps).toEqual([]) // Empty array initially
+    expect(result.progress.overallProgress).toBe(0) // 0% initially
   })
 })
