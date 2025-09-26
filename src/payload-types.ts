@@ -69,6 +69,8 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    projects: Project;
+    sessions: Session;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -77,6 +79,8 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    projects: ProjectsSelect<false> | ProjectsSelect<true>;
+    sessions: SessionsSelect<false> | SessionsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -311,6 +315,132 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: string;
+  title: string;
+  description?: string | null;
+  genre: 'action' | 'comedy' | 'drama' | 'horror' | 'sci-fi' | 'thriller' | 'romance' | 'documentary';
+  /**
+   * Total number of episodes planned
+   */
+  episodeCount: number;
+  targetAudience?: ('children' | 'family' | 'teen' | 'adult') | null;
+  status: 'concept' | 'pre-production' | 'production' | 'post-production' | 'completed' | 'on-hold';
+  createdBy: string | User;
+  /**
+   * Users who can edit this project
+   */
+  collaborators?: (string | User)[] | null;
+  /**
+   * Reference images for visual style
+   */
+  styleReferences?: (string | Media)[] | null;
+  projectSettings?: {
+    aspectRatio?: ('16:9' | '4:3' | '21:9') | null;
+    /**
+     * Target duration per episode in minutes
+     */
+    episodeDuration?: number | null;
+    qualityTier?: ('draft' | 'standard' | 'premium') | null;
+  };
+  /**
+   * Automated progress tracking
+   */
+  progress?: {
+    currentPhase?:
+      | (
+          | 'story_development'
+          | 'character_creation'
+          | 'visual_design'
+          | 'audio_design'
+          | 'scene_production'
+          | 'post_production'
+          | 'final_assembly'
+        )
+      | null;
+    /**
+     * Array of completed workflow steps
+     */
+    completedSteps?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    /**
+     * Overall completion percentage
+     */
+    overallProgress?: number | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessions".
+ */
+export interface Session {
+  id: string;
+  /**
+   * Project ID reference
+   */
+  project: string;
+  user: string | User;
+  /**
+   * Current workflow step identifier
+   */
+  currentStep: string;
+  /**
+   * Array of chat messages and interactions
+   */
+  conversationHistory?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Current context for LLM processing
+   */
+  contextData?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Whether system is waiting for user response
+   */
+  awaitingUserInput?: boolean | null;
+  /**
+   * Last set of choices presented to user
+   */
+  lastChoices?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  sessionState?: ('active' | 'paused' | 'completed' | 'error') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -323,6 +453,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'projects';
+        value: string | Project;
+      } | null)
+    | ({
+        relationTo: 'sessions';
+        value: string | Session;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -472,6 +610,53 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects_select".
+ */
+export interface ProjectsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  genre?: T;
+  episodeCount?: T;
+  targetAudience?: T;
+  status?: T;
+  createdBy?: T;
+  collaborators?: T;
+  styleReferences?: T;
+  projectSettings?:
+    | T
+    | {
+        aspectRatio?: T;
+        episodeDuration?: T;
+        qualityTier?: T;
+      };
+  progress?:
+    | T
+    | {
+        currentPhase?: T;
+        completedSteps?: T;
+        overallProgress?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessions_select".
+ */
+export interface SessionsSelect<T extends boolean = true> {
+  project?: T;
+  user?: T;
+  currentStep?: T;
+  conversationHistory?: T;
+  contextData?: T;
+  awaitingUserInput?: T;
+  lastChoices?: T;
+  sessionState?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

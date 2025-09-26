@@ -30,7 +30,8 @@
       "Bash(node:*)",
       "Bash(npm:*)",
       "Bash(pnpm:*)",
-      "Bash(mongod:*)"
+      "Bash(mongod:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
