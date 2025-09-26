@@ -9,7 +9,7 @@ import { FormField, FormInput, FormSelect, FormTextarea, FormNumberInput } from 
 import type { z } from 'zod'
 import type { Project } from '@/payload-types'
 
-type ProjectFormData = z.infer<typeof projectSchema>
+type ProjectFormData = z.input<typeof projectSchema>
 
 interface ProjectFormProps {
   initialData?: Partial<Project>
@@ -27,36 +27,28 @@ const GENRE_OPTIONS = [
   { value: 'sci-fi', label: 'Sci-Fi' },
   { value: 'thriller', label: 'Thriller' },
   { value: 'romance', label: 'Romance' },
-  { value: 'documentary', label: 'Documentary' }
+  { value: 'documentary', label: 'Documentary' },
 ]
 
 const TARGET_AUDIENCE_OPTIONS = [
   { value: 'family', label: 'Family' },
   { value: 'teen', label: 'Teen' },
   { value: 'adult', label: 'Adult' },
-  { value: 'children', label: 'Children' }
-]
-
-const STATUS_OPTIONS = [
-  { value: 'concept', label: 'Concept' },
-  { value: 'pre-production', label: 'Pre-production' },
-  { value: 'production', label: 'Production' },
-  { value: 'post-production', label: 'Post-production' },
-  { value: 'completed', label: 'Completed' }
+  { value: 'children', label: 'Children' },
 ]
 
 const ASPECT_RATIO_OPTIONS = [
   { value: '16:9', label: '16:9 (Widescreen)' },
   { value: '21:9', label: '21:9 (Ultra-wide)' },
   { value: '4:3', label: '4:3 (Standard)' },
-  { value: '1:1', label: '1:1 (Square)' }
+  { value: '1:1', label: '1:1 (Square)' },
 ]
 
 const QUALITY_TIER_OPTIONS = [
   { value: 'draft', label: 'Draft' },
   { value: 'standard', label: 'Standard' },
   { value: 'premium', label: 'Premium' },
-  { value: 'professional', label: 'Professional' }
+  { value: 'professional', label: 'Professional' },
 ]
 
 export function ProjectForm({
@@ -64,7 +56,7 @@ export function ProjectForm({
   onSubmit,
   submitLabel = 'Create Project',
   isSubmitting: externalIsSubmitting = false,
-  className = ''
+  className = '',
 }: ProjectFormProps) {
   const [isPending, startTransition] = useTransition()
   const isSubmitting = externalIsSubmitting || isPending
@@ -74,7 +66,7 @@ export function ProjectForm({
     handleSubmit,
     reset,
     watch,
-    formState: { errors, isValid }
+    formState: { errors, isValid },
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
     mode: 'onBlur', // Validate on blur for immediate feedback
@@ -85,18 +77,12 @@ export function ProjectForm({
       genre: (initialData?.genre as any) || '',
       episodeCount: initialData?.episodeCount || 10,
       targetAudience: (initialData?.targetAudience as any) || 'family',
-      status: (initialData?.status as any) || 'concept',
       projectSettings: {
         aspectRatio: initialData?.projectSettings?.aspectRatio || '16:9',
         episodeDuration: initialData?.projectSettings?.episodeDuration || 22,
-        qualityTier: initialData?.projectSettings?.qualityTier || 'standard'
+        qualityTier: initialData?.projectSettings?.qualityTier || 'standard',
       },
-      progress: initialData?.progress || {
-        currentPhase: 'story_development',
-        completedSteps: [],
-        overallProgress: 0
-      }
-    }
+    },
   })
 
   // Watch description for character count
@@ -123,23 +109,14 @@ export function ProjectForm({
   }
 
   return (
-    <form 
-      onSubmit={handleSubmit(handleFormSubmit)}
-      className={`space-y-6 ${className}`}
-      noValidate
-    >
+    <form onSubmit={handleSubmit(handleFormSubmit)} className={`space-y-6 ${className}`} noValidate>
       {/* Basic Information */}
       <div className="space-y-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Basic Information
         </h3>
 
-        <FormField
-          label="Project Title"
-          name="title"
-          required
-          error={errors.title?.message}
-        >
+        <FormField label="Project Title" name="title" required error={errors.title?.message}>
           <FormInput
             {...register('title')}
             placeholder="Enter your project title"
@@ -166,12 +143,7 @@ export function ProjectForm({
         </FormField>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            label="Genre"
-            name="genre"
-            required
-            error={errors.genre?.message}
-          >
+          <FormField label="Genre" name="genre" required error={errors.genre?.message}>
             <FormSelect
               {...register('genre')}
               options={GENRE_OPTIONS}
@@ -204,18 +176,6 @@ export function ProjectForm({
             <FormSelect
               {...register('targetAudience')}
               options={TARGET_AUDIENCE_OPTIONS}
-              disabled={isSubmitting}
-            />
-          </FormField>
-
-          <FormField
-            label="Status"
-            name="status"
-            error={errors.status?.message}
-          >
-            <FormSelect
-              {...register('status')}
-              options={STATUS_OPTIONS}
               disabled={isSubmitting}
             />
           </FormField>
@@ -287,8 +247,19 @@ export function ProjectForm({
         >
           {isSubmitting && (
             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           )}
           {isSubmitting ? 'Saving...' : submitLabel}
@@ -300,7 +271,11 @@ export function ProjectForm({
         <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
           <div className="flex">
             <svg className="w-5 h-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-red-800 dark:text-red-200">

@@ -32,7 +32,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
     }
 
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-    
+
     // Verify JWT token
     const jwtSecret = process.env.JWT_SECRET || process.env.PAYLOAD_SECRET
     if (!jwtSecret) {
@@ -77,9 +77,8 @@ export async function authenticateRequest(request: NextRequest): Promise<{
         email: user.email,
         role: user.role || 'user',
         name: user.name,
-      }
+      },
     }
-
   } catch (error) {
     console.error('Authentication error:', error)
     return { authenticated: false, error: 'Authentication failed' }
@@ -112,13 +111,13 @@ export function createAuthenticatedHandler(
 
     // Authenticate request
     const authResult = await authenticateRequest(request)
-    
+
     if (!authResult.authenticated) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: authResult.error || 'Authentication required',
-          code: 'UNAUTHORIZED'
+          code: 'UNAUTHORIZED',
         },
         { status: 401 }
       )
@@ -128,10 +127,10 @@ export function createAuthenticatedHandler(
     if (options.requiredRoles && options.requiredRoles.length > 0) {
       if (!authorizeRole(authResult.user!.role, options.requiredRoles)) {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'Insufficient permissions',
-            code: 'FORBIDDEN'
+            code: 'FORBIDDEN',
           },
           { status: 403 }
         )
@@ -164,13 +163,13 @@ export async function validateResourceOwnership(
           id: resourceId,
           depth: 1,
         })
-        
+
         // Check if user is creator or collaborator
         const isCreator = project.createdBy?.id === userId || project.createdBy === userId
         const isCollaborator = project.collaborators?.some(
           (collab: any) => collab.id === userId || collab === userId
         )
-        
+
         return isCreator || isCollaborator
       }
 
@@ -180,17 +179,17 @@ export async function validateResourceOwnership(
           id: resourceId,
           depth: 1,
         })
-        
+
         // Check if user owns the session or has access to the project
         const isOwner = session.user?.id === userId || session.user === userId
         if (isOwner) return true
-        
+
         // Check project access
         const projectId = session.project?.id || session.project
         if (projectId) {
           return validateResourceOwnership(userId, 'project', projectId)
         }
-        
+
         return false
       }
 
@@ -200,13 +199,13 @@ export async function validateResourceOwnership(
           id: resourceId,
           depth: 1,
         })
-        
+
         // Check project access
         const projectId = media.project?.id || media.project
         if (projectId) {
           return validateResourceOwnership(userId, 'project', projectId)
         }
-        
+
         return false
       }
 
@@ -262,7 +261,7 @@ export async function validateSessionToken(token: string): Promise<{
     }
 
     const decoded = jwt.verify(token, jwtSecret) as any
-    
+
     const payload = await getPayloadInstance()
     const user = await payload.findByID({
       collection: 'users',
@@ -281,9 +280,9 @@ export async function validateSessionToken(token: string): Promise<{
         email: user.email,
         role: user.role || 'user',
         name: user.name,
-      }
+      },
     }
-  } catch (error) {
+  } catch (_error) {
     return { valid: false, error: 'Token validation failed' }
   }
 }

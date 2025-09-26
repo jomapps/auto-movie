@@ -14,28 +14,31 @@ export async function POST(request: NextRequest) {
     // Parse multipart form data
     const formData = await request.formData()
     const sessionId = formData.get('sessionId') as string
-    const messageId = formData.get('messageId') as string || null
+    const _messageId = (formData.get('messageId') as string) || null
     const files = formData.getAll('files') as File[]
 
     // Validate required fields
     if (!sessionId || files.length === 0) {
-      return NextResponse.json({
-        error: 'Validation failed',
-        details: {
-          sessionId: !sessionId ? 'sessionId is required' : undefined,
-          files: files.length === 0 ? 'At least one file is required' : undefined
-        }
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: {
+            sessionId: !sessionId ? 'sessionId is required' : undefined,
+            files: files.length === 0 ? 'At least one file is required' : undefined,
+          },
+        },
+        { status: 400 }
+      )
     }
 
     const payload = await getPayload({ config })
 
     // Verify session exists and user has access
-    const session = await payload.findByID({
+    const session = (await payload.findByID({
       collection: 'sessions',
       id: sessionId,
-      depth: 1
-    }) as Session
+      depth: 1,
+    })) as Session
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
@@ -49,34 +52,47 @@ export async function POST(request: NextRequest) {
 
     // Upload files through PayloadCMS Media collection
     const uploadedMedia: Media[] = []
-    
+
     for (const file of files) {
       try {
         // Validate file size (e.g., max 25MB for chat uploads)
         const maxSize = 25 * 1024 * 1024 // 25MB
         if (file.size > maxSize) {
-          return NextResponse.json({
-            error: 'File too large',
-            details: {
-              file: `File ${file.name} exceeds maximum size of 25MB`
-            }
-          }, { status: 400 })
+          return NextResponse.json(
+            {
+              error: 'File too large',
+              details: {
+                file: `File ${file.name} exceeds maximum size of 25MB`,
+              },
+            },
+            { status: 400 }
+          )
         }
 
         // Validate file types (images, documents, audio)
         const allowedTypes = [
-          'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-          'application/pdf', 'text/plain', 'text/markdown',
-          'audio/mpeg', 'audio/wav', 'audio/ogg'
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+          'application/pdf',
+          'text/plain',
+          'text/markdown',
+          'audio/mpeg',
+          'audio/wav',
+          'audio/ogg',
         ]
 
         if (!allowedTypes.includes(file.type)) {
-          return NextResponse.json({
-            error: 'Unsupported file type',
-            details: {
-              file: `File ${file.name} has unsupported type ${file.type}`
-            }
-          }, { status: 400 })
+          return NextResponse.json(
+            {
+              error: 'Unsupported file type',
+              details: {
+                file: `File ${file.name} has unsupported type ${file.type}`,
+              },
+            },
+            { status: 400 }
+          )
         }
 
         // Create media record for chat upload
@@ -85,32 +101,35 @@ export async function POST(request: NextRequest) {
           mimeType: file.type,
           filesize: file.size,
           project: session.project,
-          mediaType: 'chat_upload',
+          mediaType: 'concept_art' as const, // Using valid mediaType from enum
           agentGenerated: false,
           description: `Chat upload from session ${sessionId}`,
+          alt: file.name, // Required by Media interface
           tags: ['chat', 'upload'],
           relatedElements: {
-            sessionId: sessionId,
-            messageId: messageId
+            scene: sessionId, // Using scene field to store session ID
+            timestamp: Date.now(), // Adding timestamp
           },
-          status: 'active'
+          status: 'active' as const,
         }
 
-        const media = await payload.create({
+        const media = (await payload.create({
           collection: 'media',
-          data: mediaData
-        }) as Media
+          data: mediaData,
+        })) as Media
 
         uploadedMedia.push(media)
-
       } catch (fileError) {
         console.error(`Error uploading file ${file.name}:`, fileError)
-        return NextResponse.json({
-          error: 'Upload failed',
-          details: {
-            file: `Failed to upload ${file.name}`
-          }
-        }, { status: 500 })
+        return NextResponse.json(
+          {
+            error: 'Upload failed',
+            details: {
+              file: `Failed to upload ${file.name}`,
+            },
+          },
+          { status: 500 }
+        )
       }
     }
 
@@ -119,25 +138,21 @@ export async function POST(request: NextRequest) {
       uploads: uploadedMedia.map((media: Media) => ({
         id: media.id,
         url: media.url || '',
-        filename: media.filename || file.name,
+        filename: media.filename || 'unknown',
         size: media.filesize || 0,
         mimeType: media.mimeType || 'application/octet-stream',
-        mediaType: media.mediaType
-      }))
+        mediaType: media.mediaType,
+      })),
     }
 
     return NextResponse.json(response, { status: 201 })
-
   } catch (error) {
     console.error('Error uploading chat files:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid session ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

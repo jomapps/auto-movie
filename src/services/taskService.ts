@@ -59,7 +59,7 @@ export class TaskServiceClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(data),
       })
@@ -71,7 +71,9 @@ export class TaskServiceClient {
       return await response.json()
     } catch (error) {
       console.error('Task service submission error:', error)
-      throw new Error(`Failed to submit task: ${error.message}`)
+      throw new Error(
+        `Failed to submit task: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -80,7 +82,7 @@ export class TaskServiceClient {
       const response = await fetch(`${this.baseUrl}/api/v1/tasks/${taskId}/status`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       })
 
@@ -91,7 +93,9 @@ export class TaskServiceClient {
       return await response.json()
     } catch (error) {
       console.error('Task status check error:', error)
-      throw new Error(`Failed to get task status: ${error.message}`)
+      throw new Error(
+        `Failed to get task status: ${error instanceof Error ? error.message : String(error)}`
+      )
     }
   }
 
@@ -100,7 +104,7 @@ export class TaskServiceClient {
       const response = await fetch(`${this.baseUrl}/api/v1/tasks/${taskId}/cancel`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       })
 
@@ -118,7 +122,7 @@ export class TaskServiceClient {
     try {
       const response = await fetch(`${this.baseUrl}/projects/${projectId}/workflow`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       })
 
@@ -139,22 +143,25 @@ export class TaskServiceClient {
    */
   async updateTaskProgress(
     projectId: string,
-    taskId: string, 
+    taskId: string,
     progress: number,
     status?: WorkflowTask['status']
   ): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/projects/${projectId}/workflow/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          progress,
-          status,
-        }),
-      })
+      const response = await fetch(
+        `${this.baseUrl}/projects/${projectId}/workflow/tasks/${taskId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            progress,
+            status,
+          }),
+        }
+      )
 
       return response.ok
     } catch (error) {
@@ -291,7 +298,7 @@ export class TaskServiceClient {
     }
 
     const stepTasks = taskTemplates[stepId as keyof typeof taskTemplates] || []
-    
+
     return stepTasks.map((task, index) => ({
       id: `${stepId}_${index + 1}`,
       step: stepId,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { Session, Project } from '@/payload-types'
+import type { Session } from '@/payload-types'
 
 // GET /api/v1/chat/sessions - List chat sessions with filtering
 export async function GET(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       const project = await payload.findByID({
         collection: 'projects',
         id: projectId,
-        depth: 0
+        depth: 0,
       })
 
       if (!project) {
@@ -59,43 +59,41 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       depth: 2, // Include project and participants
-      sort: '-updatedAt'
+      sort: '-updatedAt',
     })
 
     // Format response according to contract
     const response = {
       sessions: result.docs.map((session: Session) => ({
         id: session.id,
-        title: session.title || `Session ${session.id}`,
-        projectId: typeof session.project === 'object' ? session.project.id : session.project,
-        projectName: typeof session.project === 'object' ? session.project.title : '',
-        status: session.status || 'active',
-        messageCount: session.messageCount || 0,
+        title: `Session ${session.id}`, // Session interface doesn't have title property
+        projectId: session.project, // Session interface defines project as string
+        projectName: '', // Would need to fetch project details separately
+        status: session.sessionState || 'active', // Using sessionState from Session interface
+        messageCount: Array.isArray(session.conversationHistory)
+          ? session.conversationHistory.length
+          : 0,
         lastActivity: session.updatedAt,
         createdAt: session.createdAt,
-        participants: session.participants || []
+        participants: [], // Session interface doesn't have participants property
       })),
       pagination: {
         page: result.page || 1,
         limit: result.limit,
         total: result.totalDocs,
-        pages: result.totalPages
-      }
+        pages: result.totalPages,
+      },
     }
 
     return NextResponse.json(response)
-
   } catch (error) {
     console.error('Error fetching chat sessions:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -108,16 +106,19 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json()
-    const { projectId, title, initialMessage } = data
+    const { projectId, title: _title, initialMessage } = data
 
     // Validate required fields
     if (!projectId) {
-      return NextResponse.json({
-        error: 'Validation failed',
-        details: {
-          projectId: 'projectId is required'
-        }
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: {
+            projectId: 'projectId is required',
+          },
+        },
+        { status: 400 }
+      )
     }
 
     const payload = await getPayload({ config })
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
     const project = await payload.findByID({
       collection: 'projects',
       id: projectId,
-      depth: 0
+      depth: 0,
     })
 
     if (!project) {
@@ -141,47 +142,47 @@ export async function POST(request: NextRequest) {
 
     // Create new session
     const sessionData = {
-      title: title || `New Session - ${new Date().toLocaleDateString()}`,
       project: projectId,
-      status: 'active',
-      messageCount: 0,
-      participants: [], // TODO: Add current user
-      // createdBy: userId, // TODO: Set from authenticated user
-      conversationHistory: initialMessage ? [{
-        role: 'user',
-        content: initialMessage,
-        timestamp: new Date().toISOString()
-      }] : []
+      user: 'temp-user-id', // TODO: Get actual user ID from auth
+      currentStep: 'initial',
+      conversationHistory: initialMessage
+        ? [
+            {
+              role: 'user',
+              content: initialMessage,
+              timestamp: new Date().toISOString(),
+            },
+          ]
+        : [],
+      sessionState: 'active' as const,
     }
 
-    const session = await payload.create({
+    const session = (await payload.create({
       collection: 'sessions',
-      data: sessionData
-    }) as Session
+      data: sessionData,
+    })) as Session
 
     // Format response
     const response = {
       id: session.id,
-      title: session.title,
+      title: `Session ${session.id}`, // Session interface doesn't have title property
       projectId: session.project,
-      status: session.status,
-      messageCount: session.messageCount || 0,
-      participants: session.participants || [],
-      createdAt: session.createdAt
+      status: session.sessionState || 'active',
+      messageCount: Array.isArray(session.conversationHistory)
+        ? session.conversationHistory.length
+        : 0,
+      participants: [], // Session interface doesn't have participants property
+      createdAt: session.createdAt,
     }
 
     return NextResponse.json(response, { status: 201 })
-
   } catch (error) {
     console.error('Error creating chat session:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

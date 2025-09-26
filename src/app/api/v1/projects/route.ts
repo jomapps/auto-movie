@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { Project, User } from '@/payload-types'
+import type { Project } from '@/payload-types'
 
 // GET /api/v1/projects - List user's projects with filtering and pagination
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     const payload = await getPayload({ config })
-    
+
     // Build query filters
     const where: any = {
       // TODO: Filter by authenticated user
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       depth: 2, // Include related user data
-      sort: '-createdAt'
+      sort: '-createdAt',
     })
 
     // Format response according to contract
@@ -57,27 +57,23 @@ export async function GET(request: NextRequest) {
         targetAudience: project.targetAudience,
         progress: {
           currentPhase: project.progress?.currentPhase || 'concept',
-          overallProgress: project.progress?.overallProgress || 0
+          overallProgress: project.progress?.overallProgress || 0,
         },
         createdAt: project.createdAt,
-        updatedAt: project.updatedAt
+        updatedAt: project.updatedAt,
       })),
       pagination: {
         page: result.page || 1,
         limit: result.limit,
         total: result.totalDocs,
-        pages: result.totalPages
-      }
+        pages: result.totalPages,
+      },
     }
 
     return NextResponse.json(response)
-
   } catch (error) {
     console.error('Error fetching projects:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -90,38 +86,56 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json()
-    
+
     // Validate required fields
     if (!data.title || !data.genre || !data.episodeCount) {
-      return NextResponse.json({
-        error: 'Validation failed',
-        details: {
-          title: !data.title ? 'Title is required' : undefined,
-          genre: !data.genre ? 'Genre is required' : undefined,
-          episodeCount: !data.episodeCount ? 'Episode count is required' : undefined
-        }
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: {
+            title: !data.title ? 'Title is required' : undefined,
+            genre: !data.genre ? 'Genre is required' : undefined,
+            episodeCount: !data.episodeCount ? 'Episode count is required' : undefined,
+          },
+        },
+        { status: 400 }
+      )
     }
 
     // Validate episode count range
     if (data.episodeCount < 1 || data.episodeCount > 50) {
-      return NextResponse.json({
-        error: 'Validation failed',
-        details: {
-          episodeCount: 'Episode count must be between 1 and 50'
-        }
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: {
+            episodeCount: 'Episode count must be between 1 and 50',
+          },
+        },
+        { status: 400 }
+      )
     }
 
     // Validate genre
-    const validGenres = ['action', 'comedy', 'drama', 'scifi', 'fantasy', 'horror', 'documentary', 'animation']
+    const validGenres = [
+      'action',
+      'comedy',
+      'drama',
+      'scifi',
+      'fantasy',
+      'horror',
+      'documentary',
+      'animation',
+    ]
     if (!validGenres.includes(data.genre)) {
-      return NextResponse.json({
-        error: 'Validation failed',
-        details: {
-          genre: `Genre must be one of: ${validGenres.join(', ')}`
-        }
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: {
+            genre: `Genre must be one of: ${validGenres.join(', ')}`,
+          },
+        },
+        { status: 400 }
+      )
     }
 
     const payload = await getPayload({ config })
@@ -138,24 +152,24 @@ export async function POST(request: NextRequest) {
       genre: data.genre,
       episodeCount: data.episodeCount,
       targetAudience: data.targetAudience || 'all',
-      status: 'concept',
-      // createdBy: userId, // TODO: Set from authenticated user
+      status: 'concept' as const,
+      createdBy: 'temp-user-id', // TODO: Set from authenticated user
       collaborators: [],
       projectSettings: {
         aspectRatio: data.projectSettings?.aspectRatio || '16:9',
         episodeDuration: data.projectSettings?.episodeDuration || 30,
-        qualityTier: data.projectSettings?.qualityTier || 'standard'
+        qualityTier: data.projectSettings?.qualityTier || 'standard',
       },
       progress: {
-        currentPhase: 'story_development',
+        currentPhase: 'story_development' as const,
         completedSteps: [],
-        overallProgress: 0
-      }
+        overallProgress: 0,
+      },
     }
 
     const project = await payload.create({
       collection: 'projects',
-      data: projectData
+      data: projectData,
     })
 
     // Format response according to contract
@@ -171,16 +185,12 @@ export async function POST(request: NextRequest) {
       collaborators: project.collaborators || [],
       projectSettings: project.projectSettings,
       progress: project.progress,
-      createdAt: project.createdAt
+      createdAt: project.createdAt,
     }
 
     return NextResponse.json(response, { status: 201 })
-
   } catch (error) {
     console.error('Error creating project:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

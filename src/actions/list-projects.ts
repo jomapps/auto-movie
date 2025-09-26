@@ -37,21 +37,22 @@ export interface ProjectListResult {
 
 export async function listProjects(params: ProjectListParams = {}): Promise<ProjectListResult> {
   try {
-    // Validate and set defaults
+    // Extract pagination and other fields not in schema
     const {
       page = 1,
       limit = 10,
-      sort = '-createdAt',
-      search,
-      genre,
-      status,
+      sort: _sort = '-createdAt',
       targetAudience,
       progressMin,
       progressMax,
       episodeCountMin,
       episodeCountMax,
-      createdBy
-    } = projectFiltersSchema.parse(params)
+      createdBy,
+      ...filterParams
+    } = params
+
+    // Validate filter params with schema
+    const { search, genre, status, sortBy, sortOrder } = projectFiltersSchema.parse(filterParams)
 
     // Build where clause for filtering
     const where: Where = {}
@@ -60,10 +61,7 @@ export async function listProjects(params: ProjectListParams = {}): Promise<Proj
     // Text search across title and description
     if (search && search.trim()) {
       andConditions.push({
-        or: [
-          { title: { like: search } },
-          { description: { like: search } }
-        ]
+        or: [{ title: { like: search } }, { description: { like: search } }],
       })
     }
 
@@ -128,6 +126,9 @@ export async function listProjects(params: ProjectListParams = {}): Promise<Proj
       where.and = andConditions
     }
 
+    // Construct sort string from validated sortBy and sortOrder
+    const sortString = sortOrder === 'desc' ? `-${sortBy}` : sortBy
+
     // Get PayloadCMS instance
     const payload = await getPayload({ config })
 
@@ -135,10 +136,10 @@ export async function listProjects(params: ProjectListParams = {}): Promise<Proj
     const result = await payload.find({
       collection: 'projects',
       where,
-      sort,
+      sort: sortString,
       page,
       limit,
-      depth: 1 // Include some related data but not too deep for performance
+      depth: 1, // Include some related data but not too deep for performance
     })
 
     return {
@@ -149,10 +150,9 @@ export async function listProjects(params: ProjectListParams = {}): Promise<Proj
         totalPages: result.totalPages,
         page: result.page || 1,
         hasNextPage: result.hasNextPage || false,
-        hasPrevPage: result.hasPrevPage || false
-      }
+        hasPrevPage: result.hasPrevPage || false,
+      },
     }
-
   } catch (error) {
     console.error('List projects error:', error)
 
@@ -162,7 +162,7 @@ export async function listProjects(params: ProjectListParams = {}): Promise<Proj
       const firstError = zodError.errors[0]
       return {
         success: false,
-        error: `Invalid filter parameters: ${firstError?.message || 'Please check your search criteria.'}`
+        error: `Invalid filter parameters: ${firstError?.message || 'Please check your search criteria.'}`,
       }
     }
 
@@ -171,21 +171,26 @@ export async function listProjects(params: ProjectListParams = {}): Promise<Proj
       const handledError = handlePayloadError(error, 'find')
       return {
         success: false,
-        error: handledError.message
+        error: handledError.message,
       }
     }
 
     // Handle generic errors
-    const projectError = createProjectError('SERVER_ERROR', 'Failed to retrieve projects. Please try again.')
+    const projectError = createProjectError(
+      'SERVER_ERROR',
+      'Failed to retrieve projects. Please try again.'
+    )
     return {
       success: false,
-      error: projectError.message
+      error: projectError.message,
     }
   }
 }
 
 // Helper function to get projects count for dashboard stats
-export async function getProjectsCount(userId?: string): Promise<{ total: number; error?: string }> {
+export async function getProjectsCount(
+  userId?: string
+): Promise<{ total: number; error?: string }> {
   try {
     const payload = await getPayload({ config })
 
@@ -193,11 +198,10 @@ export async function getProjectsCount(userId?: string): Promise<{ total: number
 
     const result = await payload.count({
       collection: 'projects',
-      where
+      where,
     })
 
     return { total: result.totalDocs }
-
   } catch (error) {
     console.error('Get projects count error:', error)
     return { total: 0, error: 'Failed to get projects count' }

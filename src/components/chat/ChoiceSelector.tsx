@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
+// import { Button } from '@/components/ui/Button'
 
 interface Choice {
   id: string
@@ -21,10 +21,10 @@ interface ChoiceSelectorProps {
   disabled?: boolean
 }
 
-export default function ChoiceSelector({ 
-  choices, 
-  onSelect, 
-  disabled = false 
+export default function ChoiceSelector({
+  choices,
+  onSelect,
+  disabled = false,
 }: ChoiceSelectorProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null)
   const [showDetails, setShowDetails] = useState<string | null>(null)
@@ -80,7 +80,12 @@ export default function ChoiceSelector({
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+            />
           </svg>
         </div>
         <div>
@@ -90,14 +95,14 @@ export default function ChoiceSelector({
       </div>
 
       <div className="grid gap-3">
-        {choices.map((choice) => (
+        {choices.map(choice => (
           <div key={choice.id} className="space-y-2">
             <button
               onClick={() => handleSelect(choice.id)}
               disabled={disabled || selectedChoice === choice.id}
               className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${getChoiceColor(choice.type)} ${
-                selectedChoice === choice.id 
-                  ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-900' 
+                selectedChoice === choice.id
+                  ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-900'
                   : ''
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -106,17 +111,13 @@ export default function ChoiceSelector({
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-xl">{getChoiceIcon(choice.type)}</span>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-white text-base">
-                        {choice.title}
-                      </h4>
+                      <h4 className="font-semibold text-white text-base">{choice.title}</h4>
                       {choice.type === 'recommended' && (
-                        <span className="text-green-400 text-xs font-medium">
-                          Recommended
-                        </span>
+                        <span className="text-green-400 text-xs font-medium">Recommended</span>
                       )}
                     </div>
                   </div>
-                  
+
                   <p className="text-slate-300 text-sm mb-3 leading-relaxed">
                     {choice.description}
                   </p>
@@ -135,9 +136,7 @@ export default function ChoiceSelector({
                       {choice.metadata.timeEstimate && (
                         <div className="flex items-center gap-1">
                           <span className="text-slate-400">Time:</span>
-                          <span className="text-slate-300">
-                            {choice.metadata.timeEstimate}
-                          </span>
+                          <span className="text-slate-300">{choice.metadata.timeEstimate}</span>
                         </div>
                       )}
                       {choice.metadata.impact && (
@@ -157,10 +156,10 @@ export default function ChoiceSelector({
                   {selectedChoice === choice.id && disabled && (
                     <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
                   )}
-                  
+
                   {/* Details toggle */}
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       setShowDetails(showDetails === choice.id ? null : choice.id)
                     }}
@@ -168,7 +167,12 @@ export default function ChoiceSelector({
                     title="View details"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -180,18 +184,18 @@ export default function ChoiceSelector({
               <div className="ml-4 pl-4 border-l-2 border-slate-700 py-2">
                 <div className="text-sm text-slate-400 space-y-2">
                   <p>
-                    <strong>What happens next:</strong> This choice will guide the AI to focus on 
+                    <strong>What happens next:</strong> This choice will guide the AI to focus on
                     specific aspects of your project and determine the next workflow steps.
                   </p>
                   {choice.type === 'manual' && (
                     <p className="text-orange-400">
-                      <strong>Manual Override:</strong> You&apos;ll be able to provide custom instructions 
-                      instead of following the standard workflow.
+                      <strong>Manual Override:</strong> You&apos;ll be able to provide custom
+                      instructions instead of following the standard workflow.
                     </p>
                   )}
                   {choice.type === 'recommended' && (
                     <p className="text-green-400">
-                      <strong>AI Recommended:</strong> This option follows best practices and 
+                      <strong>AI Recommended:</strong> This option follows best practices and
                       typical workflow patterns for similar projects.
                     </p>
                   )}
@@ -213,9 +217,7 @@ export default function ChoiceSelector({
             <span className="text-lg">✏️</span>
             <div>
               <div className="font-medium text-white">Manual Override</div>
-              <div className="text-sm text-slate-400">
-                Provide your own custom instructions
-              </div>
+              <div className="text-sm text-slate-400">Provide your own custom instructions</div>
             </div>
           </div>
         </button>

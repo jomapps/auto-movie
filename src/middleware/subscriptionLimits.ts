@@ -123,9 +123,10 @@ export class SubscriptionLimitError extends AppError {
     tier: string,
     upgradeMessage?: string
   ) {
-    const message = upgradeMessage || 
+    const message =
+      upgradeMessage ||
       `${limitType} limit reached (${currentUsage}/${limit}). Upgrade your subscription to continue.`
-    
+
     super(message, ErrorType.AUTHORIZATION, 402, true, {
       limitType,
       currentUsage,
@@ -133,7 +134,7 @@ export class SubscriptionLimitError extends AppError {
       tier,
       upgradeAvailable: tier !== 'enterprise',
     })
-    
+
     this.limitType = limitType
     this.currentUsage = currentUsage
     this.limit = limit
@@ -151,7 +152,7 @@ async function getUserSubscriptionData(userId: string): Promise<{
 }> {
   try {
     const payload = await getPayloadInstance()
-    
+
     // Get user with subscription data
     const user = await payload.findByID({
       collection: 'users',
@@ -189,22 +190,19 @@ async function calculateUserUsage(payload: any, userId: string, tier: string): P
     const projectsResult = await payload.find({
       collection: 'projects',
       where: {
-        or: [
-          { createdBy: { equals: userId } },
-          { collaborators: { contains: userId } }
-        ]
+        or: [{ createdBy: { equals: userId } }, { collaborators: { contains: userId } }],
       },
       limit: 1,
     })
 
     // Count AI requests this month
-    const aiRequestsResult = await payload.find({
+    const _aiRequestsResult = await payload.find({
       collection: 'sessions',
       where: {
         and: [
           { user: { equals: userId } },
-          { updatedAt: { greater_than: startOfMonth.toISOString() } }
-        ]
+          { updatedAt: { greater_than: startOfMonth.toISOString() } },
+        ],
       },
       limit: 1,
     })
@@ -215,24 +213,23 @@ async function calculateUserUsage(payload: any, userId: string, tier: string): P
       where: {
         and: [
           { user: { equals: userId } },
-          { updatedAt: { greater_than: startOfMonth.toISOString() } }
-        ]
+          { updatedAt: { greater_than: startOfMonth.toISOString() } },
+        ],
       },
       limit: 100,
     })
 
     const monthlyAIRequests = sessions.docs.reduce((total: number, session: any) => {
-      return total + (session.conversationHistory?.filter((msg: any) => msg.role === 'user').length || 0)
+      return (
+        total + (session.conversationHistory?.filter((msg: any) => msg.role === 'user').length || 0)
+      )
     }, 0)
 
     // Count concurrent sessions
     const activeSessions = await payload.find({
       collection: 'sessions',
       where: {
-        and: [
-          { user: { equals: userId } },
-          { sessionState: { equals: 'active' } }
-        ]
+        and: [{ user: { equals: userId } }, { sessionState: { equals: 'active' } }],
       },
       limit: 1,
     })
@@ -243,8 +240,8 @@ async function calculateUserUsage(payload: any, userId: string, tier: string): P
       where: {
         and: [
           { createdBy: { equals: userId } },
-          { createdAt: { greater_than: startOfDay.toISOString() } }
-        ]
+          { createdAt: { greater_than: startOfDay.toISOString() } },
+        ],
       },
       limit: 1,
     })
@@ -254,15 +251,17 @@ async function calculateUserUsage(payload: any, userId: string, tier: string): P
       collection: 'media',
       where: {
         project: {
-          in: projectsResult.docs.map((p: any) => p.id)
-        }
+          in: projectsResult.docs.map((p: any) => p.id),
+        },
       },
       limit: 1000, // Get enough to estimate
     })
 
-    const storageUsedMB = mediaResult.docs.reduce((total: number, media: any) => {
-      return total + (media.filesize || 0)
-    }, 0) / (1024 * 1024)
+    const storageUsedMB =
+      mediaResult.docs.reduce((total: number, media: any) => {
+        return total + (media.filesize || 0)
+      }, 0) /
+      (1024 * 1024)
 
     return {
       userId,
@@ -279,7 +278,7 @@ async function calculateUserUsage(payload: any, userId: string, tier: string): P
     }
   } catch (error) {
     authLogger.error('Failed to calculate user usage', error as Error, { userId })
-    
+
     // Return minimal usage data on error
     return {
       userId,
@@ -302,7 +301,7 @@ async function calculateUserUsage(payload: any, userId: string, tier: string): P
  */
 export async function validateProjectCreation(userId: string): Promise<void> {
   const { tier, usage, limits } = await getUserSubscriptionData(userId)
-  
+
   if (usage.currentUsage.projects >= limits.maxProjects) {
     throw new SubscriptionLimitError(
       'Projects',
@@ -317,12 +316,9 @@ export async function validateProjectCreation(userId: string): Promise<void> {
 /**
  * Validate episode count limits
  */
-export async function validateEpisodeCount(
-  userId: string,
-  episodeCount: number
-): Promise<void> {
+export async function validateEpisodeCount(userId: string, episodeCount: number): Promise<void> {
   const { tier, limits } = await getUserSubscriptionData(userId)
-  
+
   if (episodeCount > limits.maxEpisodesPerProject) {
     throw new SubscriptionLimitError(
       'Episodes per project',
@@ -339,7 +335,7 @@ export async function validateEpisodeCount(
  */
 export async function validateAIRequest(userId: string): Promise<void> {
   const { tier, usage, limits } = await getUserSubscriptionData(userId)
-  
+
   if (usage.currentUsage.monthlyAIRequests >= limits.maxMonthlyAIRequests) {
     throw new SubscriptionLimitError(
       'Monthly AI requests',
@@ -356,7 +352,7 @@ export async function validateAIRequest(userId: string): Promise<void> {
  */
 export async function validateConcurrentSessions(userId: string): Promise<void> {
   const { tier, usage, limits } = await getUserSubscriptionData(userId)
-  
+
   if (usage.currentUsage.concurrentSessions >= limits.maxConcurrentSessions) {
     throw new SubscriptionLimitError(
       'Concurrent sessions',
@@ -371,12 +367,9 @@ export async function validateConcurrentSessions(userId: string): Promise<void> 
 /**
  * Validate file upload limits
  */
-export async function validateFileUpload(
-  userId: string,
-  fileSizeBytes: number
-): Promise<void> {
+export async function validateFileUpload(userId: string, fileSizeBytes: number): Promise<void> {
   const { tier, usage, limits } = await getUserSubscriptionData(userId)
-  
+
   // Check daily upload limit
   if (usage.currentUsage.dailyFileUploads >= limits.maxFileUploadsPerDay) {
     throw new SubscriptionLimitError(
@@ -387,9 +380,10 @@ export async function validateFileUpload(
       `Daily upload limit reached (${limits.maxFileUploadsPerDay}). Try again tomorrow or upgrade to ${tier === 'free' ? 'Pro' : 'Enterprise'}.`
     )
   }
-  
+
   // Check storage limit
-  const newStorageUsageGB = (usage.currentUsage.storageUsedMB + (fileSizeBytes / (1024 * 1024))) / 1024
+  const newStorageUsageGB =
+    (usage.currentUsage.storageUsedMB + fileSizeBytes / (1024 * 1024)) / 1024
   if (newStorageUsageGB > limits.maxStorageGB) {
     throw new SubscriptionLimitError(
       'Storage',
@@ -410,7 +404,7 @@ export async function validateCollaboratorAddition(
   currentCollaboratorCount: number
 ): Promise<void> {
   const { tier, limits } = await getUserSubscriptionData(userId)
-  
+
   if (currentCollaboratorCount >= limits.maxCollaboratorsPerProject) {
     throw new SubscriptionLimitError(
       'Collaborators per project',
@@ -425,12 +419,9 @@ export async function validateCollaboratorAddition(
 /**
  * Check if user has access to advanced features
  */
-export async function validateAdvancedFeature(
-  userId: string,
-  featureName: string
-): Promise<void> {
+export async function validateAdvancedFeature(userId: string, featureName: string): Promise<void> {
   const { tier, limits } = await getUserSubscriptionData(userId)
-  
+
   if (!limits.allowsAdvancedFeatures) {
     throw new SubscriptionLimitError(
       'Advanced features',
@@ -446,7 +437,13 @@ export async function validateAdvancedFeature(
  * Create subscription validation middleware
  */
 export function createSubscriptionValidator(
-  validationType: 'project' | 'ai_request' | 'session' | 'upload' | 'collaborator' | 'advanced_feature',
+  validationType:
+    | 'project'
+    | 'ai_request'
+    | 'session'
+    | 'upload'
+    | 'collaborator'
+    | 'advanced_feature',
   options: {
     extractUserId?: (req: NextRequest) => string | null
     extractData?: (req: NextRequest) => Promise<any>
@@ -456,9 +453,8 @@ export function createSubscriptionValidator(
   return async (req: NextRequest): Promise<NextResponse | null> => {
     try {
       // Extract user ID from request
-      const userId = options.extractUserId?.(req) || 
-        req.headers.get('x-user-id') || 
-        (req as any).user?.id
+      const userId =
+        options.extractUserId?.(req) || req.headers.get('x-user-id') || (req as any).user?.id
 
       if (!userId) {
         return NextResponse.json(
@@ -504,7 +500,11 @@ export function createSubscriptionValidator(
 
         case 'collaborator':
           if (data.projectId && data.currentCollaboratorCount !== undefined) {
-            await validateCollaboratorAddition(userId, data.projectId, data.currentCollaboratorCount)
+            await validateCollaboratorAddition(
+              userId,
+              data.projectId,
+              data.currentCollaboratorCount
+            )
           }
           break
 
@@ -566,12 +566,16 @@ export async function getUserUsageSummary(userId: string): Promise<{
   nearLimits: string[]
 }> {
   const { tier, usage, limits } = await getUserSubscriptionData(userId)
-  
+
   const utilizationPercentages = {
     projects: Math.round((usage.currentUsage.projects / limits.maxProjects) * 100),
     storage: Math.round((usage.currentUsage.storageUsedMB / (limits.maxStorageGB * 1024)) * 100),
-    aiRequests: Math.round((usage.currentUsage.monthlyAIRequests / limits.maxMonthlyAIRequests) * 100),
-    sessions: Math.round((usage.currentUsage.concurrentSessions / limits.maxConcurrentSessions) * 100),
+    aiRequests: Math.round(
+      (usage.currentUsage.monthlyAIRequests / limits.maxMonthlyAIRequests) * 100
+    ),
+    sessions: Math.round(
+      (usage.currentUsage.concurrentSessions / limits.maxConcurrentSessions) * 100
+    ),
     uploads: Math.round((usage.currentUsage.dailyFileUploads / limits.maxFileUploadsPerDay) * 100),
   }
 

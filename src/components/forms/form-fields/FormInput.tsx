@@ -7,14 +7,8 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
-  ({ error, className = '', ...props }, ref) => {
-    return (
-      <input
-        ref={ref}
-        className={className}
-        {...props}
-      />
-    )
+  ({ error: _error, className = '', ...props }, ref) => {
+    return <input ref={ref} className={className} {...props} />
   }
 )
 

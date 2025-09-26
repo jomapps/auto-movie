@@ -2,7 +2,7 @@
 export const serviceUrls = {
   development: {
     autoMovie: 'http://localhost:3010',
-    taskService: 'http://localhost:8001', 
+    taskService: 'http://localhost:8001',
     brainService: 'http://localhost:8002',
     agentsService: 'http://localhost:8003',
     neo4j: 'http://localhost:7474',
@@ -22,7 +22,7 @@ export const serviceUrls = {
   staging: {
     autoMovie: 'https://auto-movie.ngrok.pro',
     taskService: 'https://tasks.ngrok.pro',
-    brainService: 'https://brain.ngrok.pro', 
+    brainService: 'https://brain.ngrok.pro',
     agentsService: 'https://agents.ngrok.pro',
     neo4j: 'https://neo4j.ngrok.pro',
     // MCP Domain Services
@@ -52,17 +52,18 @@ export const serviceUrls = {
     prometheus: 'https://metrics.ft.tc',
     grafana: 'https://dash-board.ft.tc',
     healthApi: 'https://health.ft.tc',
-  }
+  },
 }
 
 export const getServiceUrl = (service: keyof typeof serviceUrls.development) => {
-  const env = process.env.NODE_ENV as keyof typeof serviceUrls || 'development'
-  return serviceUrls[env]?.[service] || serviceUrls.development[service]
+  const env = (process.env.NODE_ENV as keyof typeof serviceUrls) || 'development'
+  const envConfig = serviceUrls[env] || serviceUrls.development
+  return (envConfig as any)[service] || serviceUrls.development[service]
 }
 
 export const getCurrentEnvironment = () => {
   if (process.env.NODE_ENV === 'production') return 'production'
-  if (process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'staging') return 'staging'
+  if (process.env.VERCEL_ENV === 'preview') return 'staging'
   return 'development'
 }
 

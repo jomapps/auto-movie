@@ -136,11 +136,14 @@ export class AIServiceManager {
 
     // Initialize circuit breakers
     this.services.forEach(service => {
-      this.circuitBreakers.set(service.name, new CircuitBreaker({
-        failureThreshold: 5,
-        resetTimeout: 60000,
-        monitoringPeriod: 30000,
-      }))
+      this.circuitBreakers.set(
+        service.name,
+        new CircuitBreaker({
+          failureThreshold: 5,
+          resetTimeout: 60000,
+          monitoringPeriod: 30000,
+        })
+      )
     })
 
     aiLogger.info('AI services initialized', {
@@ -188,7 +191,7 @@ export class AIServiceManager {
     for (const service of availableServices) {
       try {
         const breaker = this.circuitBreakers.get(service.name)!
-        
+
         const response = await breaker.execute(async () => {
           return this.callAIService(service, messages, context, options)
         })
@@ -204,7 +207,7 @@ export class AIServiceManager {
         return response
       } catch (error) {
         lastError = this.handleServiceError(error as Error, service)
-        
+
         aiLogger.warn('AI service failed, trying fallback', {
           service: service.name,
           error: lastError.message,
@@ -249,12 +252,12 @@ export class AIServiceManager {
 
     try {
       const requestBody = this.buildRequestBody(service, messages, context, options)
-      
+
       const response = await fetch(`${service.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${service.apiKey}`,
+          Authorization: `Bearer ${service.apiKey}`,
           ...(service.name === 'anthropic' && {
             'anthropic-version': '2023-06-01',
           }),
@@ -267,7 +270,9 @@ export class AIServiceManager {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
-        throw new Error(`HTTP ${response.status}: ${errorData?.error?.message || response.statusText}`)
+        throw new Error(
+          `HTTP ${response.status}: ${errorData?.error?.message || response.statusText}`
+        )
       }
 
       const data = await response.json()
@@ -302,7 +307,7 @@ export class AIServiceManager {
           max_tokens: baseBody.max_tokens,
           system: context.systemPrompt || undefined,
         }
-      
+
       case 'openai':
       case 'novel-llm':
       default:
@@ -332,11 +337,13 @@ export class AIServiceManager {
       content: choice.message?.content || choice.text || '',
       model: data.model || service.model,
       service: service.name,
-      usage: data.usage ? {
-        promptTokens: data.usage.prompt_tokens || 0,
-        completionTokens: data.usage.completion_tokens || 0,
-        totalTokens: data.usage.total_tokens || 0,
-      } : undefined,
+      usage: data.usage
+        ? {
+            promptTokens: data.usage.prompt_tokens || 0,
+            completionTokens: data.usage.completion_tokens || 0,
+            totalTokens: data.usage.total_tokens || 0,
+          }
+        : undefined,
       finishReason: choice.finish_reason,
     }
 
@@ -348,7 +355,9 @@ export class AIServiceManager {
           response.choices = functionArgs.choices
         }
       } catch (parseError) {
-        aiLogger.warn('Failed to parse function call', { error: parseError.message })
+        aiLogger.warn('Failed to parse function call', {
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+        })
       }
     }
 
@@ -384,7 +393,11 @@ export class AIServiceManager {
     }
 
     // Authentication
-    if (message.includes('unauthorized') || message.includes('401') || message.includes('api key')) {
+    if (
+      message.includes('unauthorized') ||
+      message.includes('401') ||
+      message.includes('api key')
+    ) {
       return new AIServiceError(
         'AI service authentication failed',
         AIErrorType.API_KEY_INVALID,
@@ -417,7 +430,11 @@ export class AIServiceManager {
     }
 
     // Network errors
-    if (message.includes('network') || message.includes('connection') || message.includes('fetch failed')) {
+    if (
+      message.includes('network') ||
+      message.includes('connection') ||
+      message.includes('fetch failed')
+    ) {
       return new AIServiceError(
         'AI service network error',
         AIErrorType.NETWORK_ERROR,
@@ -453,11 +470,14 @@ export class AIServiceManager {
    */
   private shouldUseEmergencyFallback(error: AIServiceError): boolean {
     // Use fallback for temporary issues, not permanent ones
-    return error.retryable && ![
-      AIErrorType.API_KEY_INVALID,
-      AIErrorType.CONTENT_FILTERED,
-      AIErrorType.INVALID_REQUEST,
-    ].includes(error.aiErrorType)
+    return (
+      error.retryable &&
+      ![
+        AIErrorType.API_KEY_INVALID,
+        AIErrorType.CONTENT_FILTERED,
+        AIErrorType.INVALID_REQUEST,
+      ].includes(error.aiErrorType)
+    )
   }
 
   /**
@@ -465,22 +485,25 @@ export class AIServiceManager {
    */
   private emergencyFallback(
     messages: Array<{ role: string; content: string }>,
-    context: Record<string, any>
+    _context: Record<string, any>
   ): AIResponse {
     aiLogger.warn('Using emergency fallback response')
 
     // Generate a helpful fallback response based on the last user message
     const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.content || ''
-    
+
     let fallbackContent = "I'm experiencing technical difficulties with my AI services right now. "
 
     // Context-aware fallback responses
     if (lastUserMessage.toLowerCase().includes('help')) {
-      fallbackContent += "I'd love to help you with your project! While my AI processing is temporarily unavailable, you can continue by selecting one of the manual options or try again in a few minutes."
+      fallbackContent +=
+        "I'd love to help you with your project! While my AI processing is temporarily unavailable, you can continue by selecting one of the manual options or try again in a few minutes."
     } else if (lastUserMessage.toLowerCase().includes('choice')) {
-      fallbackContent += "I'm having trouble generating response choices at the moment. Please try again in a few minutes, or feel free to describe what you'd like to do next in your own words."
+      fallbackContent +=
+        "I'm having trouble generating response choices at the moment. Please try again in a few minutes, or feel free to describe what you'd like to do next in your own words."
     } else {
-      fallbackContent += "Please try your request again in a few minutes. In the meantime, you can continue working on your project manually or explore the media upload features."
+      fallbackContent +=
+        'Please try your request again in a few minutes. In the meantime, you can continue working on your project manually or explore the media upload features.'
     }
 
     return {
@@ -525,7 +548,7 @@ export class AIServiceManager {
           available: this.circuitBreakers.get(service.name)?.isAvailable() !== false,
           priority: service.priority,
           stats: this.circuitBreakers.get(service.name)?.getStats(),
-        }
+        },
       ])
     )
   }
@@ -538,7 +561,7 @@ class CircuitBreaker {
   private failures = 0
   private lastFailureTime = 0
   private state: 'closed' | 'open' | 'half-open' = 'closed'
-  
+
   constructor(
     private config: {
       failureThreshold: number

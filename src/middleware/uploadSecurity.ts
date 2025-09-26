@@ -3,7 +3,7 @@
  * Comprehensive security measures for file uploads
  */
 
-import { NextRequest } from 'next/server'
+// import { NextRequest } from 'next/server'
 import crypto from 'crypto'
 import path from 'path'
 
@@ -30,25 +30,25 @@ export const ALLOWED_FILE_TYPES = {
   'image/gif': ['.gif'],
   'image/webp': ['.webp'],
   'image/svg+xml': ['.svg'],
-  
+
   // Videos
   'video/mp4': ['.mp4'],
   'video/webm': ['.webm'],
   'video/quicktime': ['.mov'],
   'video/x-msvideo': ['.avi'],
-  
+
   // Audio
   'audio/mpeg': ['.mp3'],
   'audio/wav': ['.wav'],
   'audio/ogg': ['.ogg'],
   'audio/x-m4a': ['.m4a'],
-  
+
   // Documents
   'application/pdf': ['.pdf'],
   'text/plain': ['.txt'],
   'text/markdown': ['.md'],
   'application/json': ['.json'],
-  
+
   // Archives (for project imports)
   'application/zip': ['.zip'],
   'application/x-tar': ['.tar'],
@@ -59,11 +59,11 @@ export const ALLOWED_FILE_TYPES = {
  * File size limits by category (in bytes)
  */
 export const FILE_SIZE_LIMITS = {
-  image: 10 * 1024 * 1024,      // 10MB
-  video: 100 * 1024 * 1024,     // 100MB
-  audio: 20 * 1024 * 1024,      // 20MB
-  document: 5 * 1024 * 1024,    // 5MB
-  archive: 50 * 1024 * 1024,    // 50MB
+  image: 10 * 1024 * 1024, // 10MB
+  video: 100 * 1024 * 1024, // 100MB
+  audio: 20 * 1024 * 1024, // 20MB
+  document: 5 * 1024 * 1024, // 5MB
+  archive: 50 * 1024 * 1024, // 50MB
 }
 
 /**
@@ -73,7 +73,8 @@ function getFileCategory(mimeType: string): string {
   if (mimeType.startsWith('image/')) return 'image'
   if (mimeType.startsWith('video/')) return 'video'
   if (mimeType.startsWith('audio/')) return 'audio'
-  if (mimeType.includes('zip') || mimeType.includes('tar') || mimeType.includes('gzip')) return 'archive'
+  if (mimeType.includes('zip') || mimeType.includes('tar') || mimeType.includes('gzip'))
+    return 'archive'
   return 'document'
 }
 
@@ -97,8 +98,9 @@ export async function validateFileUpload(
 
   // 1. File size validation
   const category = getFileCategory(mimeType)
-  const maxSize = options.maxSize || FILE_SIZE_LIMITS[category] || FILE_SIZE_LIMITS.document
-  
+  const maxSize =
+    options.maxSize || (FILE_SIZE_LIMITS as any)[category] || FILE_SIZE_LIMITS.document
+
   if (size > maxSize) {
     errors.push(`File size (${formatFileSize(size)}) exceeds limit (${formatFileSize(maxSize)})`)
   }
@@ -114,7 +116,10 @@ export async function validateFileUpload(
   }
 
   // 3. File extension validation
-  if (ALLOWED_FILE_TYPES[mimeType] && !ALLOWED_FILE_TYPES[mimeType].includes(extension)) {
+  if (
+    (ALLOWED_FILE_TYPES as any)[mimeType] &&
+    !(ALLOWED_FILE_TYPES as any)[mimeType].includes(extension)
+  ) {
     errors.push(`File extension '${extension}' does not match MIME type '${mimeType}'`)
   }
 
@@ -149,7 +154,7 @@ export async function validateFileUpload(
       size,
       mimeType,
       extension,
-    }
+    },
   }
 }
 
@@ -162,7 +167,7 @@ function validateFilename(filename: string): {
   sanitizedName: string
 } {
   const errors: string[] = []
-  
+
   // Check filename length
   if (filename.length > 255) {
     errors.push('Filename is too long (max 255 characters)')
@@ -180,11 +185,30 @@ function validateFilename(filename: string): {
 
   // Check for dangerous filenames
   const dangerousNames = [
-    'CON', 'PRN', 'AUX', 'NUL',
-    'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
-    'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+    'CON',
+    'PRN',
+    'AUX',
+    'NUL',
+    'COM1',
+    'COM2',
+    'COM3',
+    'COM4',
+    'COM5',
+    'COM6',
+    'COM7',
+    'COM8',
+    'COM9',
+    'LPT1',
+    'LPT2',
+    'LPT3',
+    'LPT4',
+    'LPT5',
+    'LPT6',
+    'LPT7',
+    'LPT8',
+    'LPT9',
   ]
-  
+
   const baseName = path.parse(filename).name.toUpperCase()
   if (dangerousNames.includes(baseName)) {
     errors.push('Filename uses a reserved system name')
@@ -228,10 +252,10 @@ async function validateFileContent(file: File): Promise<{
 
     // Check for executable file signatures
     const executableSignatures = [
-      [0x4D, 0x5A], // PE executable
-      [0x7F, 0x45, 0x4C, 0x46], // ELF executable
-      [0xCE, 0xFA, 0xED, 0xFE], // Mach-O executable
-      [0xCA, 0xFE, 0xBA, 0xBE], // Java class file
+      [0x4d, 0x5a], // PE executable
+      [0x7f, 0x45, 0x4c, 0x46], // ELF executable
+      [0xce, 0xfa, 0xed, 0xfe], // Mach-O executable
+      [0xca, 0xfe, 0xba, 0xbe], // Java class file
     ]
 
     for (const signature of executableSignatures) {
@@ -257,7 +281,6 @@ async function validateFileContent(file: File): Promise<{
         errors.push(...scriptValidation.errors)
       }
     }
-
   } catch (error) {
     console.error('Error validating file content:', error)
     errors.push('Unable to validate file content')
@@ -272,19 +295,28 @@ async function validateFileContent(file: File): Promise<{
 /**
  * Validate MIME type against file header
  */
-function validateMimeTypeHeader(mimeType: string, header: Uint8Array): {
+function validateMimeTypeHeader(
+  mimeType: string,
+  header: Uint8Array
+): {
   isValid: boolean
   errors: string[]
 } {
   const errors: string[] = []
 
   const mimeSignatures: Record<string, number[][]> = {
-    'image/jpeg': [[0xFF, 0xD8, 0xFF]],
-    'image/png': [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
-    'image/gif': [[0x47, 0x49, 0x46, 0x38], [0x47, 0x49, 0x46, 0x39]],
+    'image/jpeg': [[0xff, 0xd8, 0xff]],
+    'image/png': [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+    'image/gif': [
+      [0x47, 0x49, 0x46, 0x38],
+      [0x47, 0x49, 0x46, 0x39],
+    ],
     'image/webp': [[0x52, 0x49, 0x46, 0x46]],
     'application/pdf': [[0x25, 0x50, 0x44, 0x46]],
-    'video/mp4': [[0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]],
+    'video/mp4': [
+      [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70],
+      [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
+    ],
   }
 
   const signatures = mimeSignatures[mimeType]
@@ -316,7 +348,7 @@ async function checkForEmbeddedScripts(file: File): Promise<{
   try {
     // Read file as text to check for script tags
     const content = await file.text()
-    
+
     const scriptPatterns = [
       /<script[^>]*>/i,
       /javascript:/i,
@@ -332,7 +364,7 @@ async function checkForEmbeddedScripts(file: File): Promise<{
         break
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // If file can't be read as text, it's probably binary and safe from script injection
   }
 
@@ -354,13 +386,10 @@ export async function checkFileDuplicate(
 }> {
   try {
     const { findDocuments } = await import('@/utils/getPayload')
-    
+
     const existingFiles = await findDocuments('media', {
       where: {
-        and: [
-          { project: { equals: projectId } },
-          { 'metadata.fileHash': { equals: fileHash } }
-        ]
+        and: [{ project: { equals: projectId } }, { 'metadata.fileHash': { equals: fileHash } }],
       },
       limit: 1,
     })
@@ -386,7 +415,7 @@ export function generateSecureFilename(
   const ext = path.extname(originalFilename)
   const timestamp = Date.now()
   const randomId = crypto.randomBytes(8).toString('hex')
-  
+
   return `${userId}_${projectId}_${timestamp}_${randomId}${ext}`
 }
 
@@ -397,19 +426,19 @@ function formatFileSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB']
   let size = bytes
   let unitIndex = 0
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024
     unitIndex++
   }
-  
+
   return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 
 /**
  * Virus scanning placeholder (integrate with ClamAV or similar)
  */
-export async function scanFileForVirus(file: File): Promise<{
+export async function scanFileForVirus(_file: File): Promise<{
   clean: boolean
   threat?: string
 }> {

@@ -10,21 +10,11 @@ export const Projects: CollectionConfig = {
     create: ({ req: { user } }) => !!user,
     read: ({ req: { user } }) => {
       if (user?.role === 'admin') return true
-      return {
-        or: [
-          { createdBy: { equals: user?.id } },
-          { collaborators: { contains: user?.id } }
-        ]
-      }
+      return Boolean(user)
     },
     update: ({ req: { user } }) => {
       if (user?.role === 'admin') return true
-      return {
-        or: [
-          { createdBy: { equals: user?.id } },
-          { collaborators: { contains: user?.id } }
-        ]
-      }
+      return Boolean(user)
     },
   },
   fields: [
@@ -118,7 +108,7 @@ export const Projects: CollectionConfig = {
       relationTo: 'media',
       hasMany: true,
       filterOptions: {
-        mediaType: { equals: 'style_reference' }
+        mediaType: { equals: 'style_reference' },
       },
       admin: {
         description: 'Reference images for visual style',

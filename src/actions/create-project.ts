@@ -25,26 +25,25 @@ export async function createProject(
       description: formData.get('description') as string,
       genre: formData.get('genre') as string,
       episodeCount: parseInt(formData.get('episodeCount') as string) || 10,
-      targetAudience: formData.get('targetAudience') as string || 'family',
-      status: formData.get('status') as string || 'concept',
-      aspectRatio: formData.get('aspectRatio') as string || '16:9',
+      targetAudience: (formData.get('targetAudience') as string) || 'family',
+      status: (formData.get('status') as string) || 'concept',
+      aspectRatio: (formData.get('aspectRatio') as string) || '16:9',
       episodeDuration: parseInt(formData.get('episodeDuration') as string) || 22,
-      qualityTier: formData.get('qualityTier') as string || 'standard'
+      qualityTier: (formData.get('qualityTier') as string) || 'standard',
     }
 
     // Validate with Zod schema
     const validatedData = projectSchema.parse({
-      ...rawData,
+      title: rawData.title,
+      description: rawData.description,
+      genre: rawData.genre,
+      episodeCount: rawData.episodeCount,
+      targetAudience: rawData.targetAudience,
       projectSettings: {
         aspectRatio: rawData.aspectRatio,
         episodeDuration: rawData.episodeDuration,
-        qualityTier: rawData.qualityTier
+        qualityTier: rawData.qualityTier,
       },
-      progress: {
-        currentPhase: 'story_development',
-        completedSteps: [],
-        overallProgress: 0
-      }
     })
 
     // Get PayloadCMS instance
@@ -59,11 +58,10 @@ export async function createProject(
         genre: validatedData.genre,
         episodeCount: validatedData.episodeCount,
         targetAudience: validatedData.targetAudience,
-        status: validatedData.status,
+        status: 'concept', // Default status for new projects
         projectSettings: validatedData.projectSettings,
-        progress: validatedData.progress,
-        createdBy: 'temp-user' // TODO: Replace with actual user ID from auth
-      }
+        createdBy: 'temp-user', // TODO: Replace with actual user ID from auth
+      },
     })
 
     // Revalidate related pages
@@ -72,7 +70,6 @@ export async function createProject(
 
     // Redirect to the new project page
     redirect(`/dashboard/projects/${result.id}`)
-
   } catch (error) {
     console.error('Create project error:', error)
 
@@ -82,7 +79,7 @@ export async function createProject(
       const firstError = zodError.errors[0]
       return {
         success: false,
-        error: firstError?.message || 'Invalid form data. Please check your inputs.'
+        error: firstError?.message || 'Invalid form data. Please check your inputs.',
       }
     }
 
@@ -91,15 +88,18 @@ export async function createProject(
       const handledError = handlePayloadError(error, 'create')
       return {
         success: false,
-        error: handledError.message
+        error: handledError.message,
       }
     }
 
     // Handle generic errors
-    const projectError = createProjectError('SERVER_ERROR', 'Failed to create project. Please try again.')
+    const projectError = createProjectError(
+      'SERVER_ERROR',
+      'Failed to create project. Please try again.'
+    )
     return {
       success: false,
-      error: projectError.message
+      error: projectError.message,
     }
   }
 }

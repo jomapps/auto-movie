@@ -5,20 +5,24 @@ export const Media: CollectionConfig = {
   slug: 'media',
   upload: {
     staticDir: 'media',
-    staticURL: '/media',
     // Cloudflare R2 configuration (S3-compatible)
-    adapter: process.env.R2_ENDPOINT ? s3Storage({
-      config: {
-        endpoint: process.env.R2_ENDPOINT,
-        region: 'auto',
-        credentials: {
-          accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-        },
-        forcePathStyle: true, // Required for R2
-      },
-      bucket: process.env.R2_BUCKET_NAME!,
-    }) : undefined,
+    adapter: process.env.R2_ENDPOINT
+      ? (s3Storage({
+          collections: {
+            media: true,
+          },
+          config: {
+            endpoint: process.env.R2_ENDPOINT,
+            region: 'auto',
+            credentials: {
+              accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+            },
+            forcePathStyle: true, // Required for R2
+          },
+          bucket: process.env.R2_BUCKET_NAME!,
+        }) as any)
+      : undefined,
     imageSizes: [
       {
         name: 'thumbnail',
@@ -39,12 +43,7 @@ export const Media: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (user?.role === 'admin') return true
-      return {
-        or: [
-          { project: { createdBy: { equals: user?.id } } },
-          { project: { collaborators: { contains: user?.id } } }
-        ]
-      }
+      return Boolean(user)
     },
   },
   fields: [
@@ -92,7 +91,7 @@ export const Media: CollectionConfig = {
       name: 'generationMetadata',
       type: 'group',
       admin: {
-        condition: (data) => data.agentGenerated,
+        condition: data => data.agentGenerated,
       },
       fields: [
         {
@@ -199,7 +198,8 @@ export const Media: CollectionConfig = {
           name: 'duration',
           type: 'number',
           admin: {
-            condition: (data) => ['video_segment', 'audio_clip', 'music_track'].includes(data.mediaType),
+            condition: data =>
+              ['video_segment', 'audio_clip', 'music_track'].includes(data.mediaType),
             description: 'Duration in seconds for audio/video',
           },
         },
@@ -207,7 +207,8 @@ export const Media: CollectionConfig = {
           name: 'resolution',
           type: 'text',
           admin: {
-            condition: (data) => ['character_design', 'environment_design', 'video_segment'].includes(data.mediaType),
+            condition: data =>
+              ['character_design', 'environment_design', 'video_segment'].includes(data.mediaType),
             description: 'Resolution (e.g., 1920x1080)',
           },
         },
@@ -215,7 +216,7 @@ export const Media: CollectionConfig = {
           name: 'fps',
           type: 'number',
           admin: {
-            condition: (data) => data.mediaType === 'video_segment',
+            condition: data => data.mediaType === 'video_segment',
             description: 'Frames per second',
           },
         },
@@ -223,7 +224,8 @@ export const Media: CollectionConfig = {
           name: 'sampleRate',
           type: 'number',
           admin: {
-            condition: (data) => ['audio_clip', 'voice_profile', 'music_track'].includes(data.mediaType),
+            condition: data =>
+              ['audio_clip', 'voice_profile', 'music_track'].includes(data.mediaType),
             description: 'Audio sample rate in Hz',
           },
         },

@@ -15,14 +15,14 @@ interface ChatInterfaceProps {
   activeSession: any | null
 }
 
-export default function ChatInterface({ 
-  projectId, 
-  projectTitle, 
-  activeSession 
+export default function ChatInterface({
+  projectId,
+  projectTitle,
+  activeSession,
 }: ChatInterfaceProps) {
   const [sessionId, setSessionId] = useState<string | null>(activeSession?.id || null)
   const [showFileUpload, setShowFileUpload] = useState(false)
-  
+
   // Use custom hooks for chat and WebSocket functionality
   const {
     messages,
@@ -32,21 +32,16 @@ export default function ChatInterface({
     progress,
     sendMessage,
     selectChoice,
-    clearMessages,
-    initializeSession
+    clearMessages: _clearMessages,
+    initializeSession,
   } = useChat(projectId, sessionId)
 
-  const {
-    isConnected,
-    connectionStatus,
-    sendEvent,
-    lastMessage
-  } = useWebSocket(sessionId)
+  const { isConnected, connectionStatus, sendEvent, lastMessage } = useWebSocket(sessionId)
 
   // Initialize session if none exists
   useEffect(() => {
     if (!sessionId) {
-      initializeSession().then((newSessionId) => {
+      initializeSession().then(newSessionId => {
         if (newSessionId) {
           setSessionId(newSessionId)
         }
@@ -64,15 +59,15 @@ export default function ChatInterface({
 
   const handleSendMessage = async (message: string, attachments?: string[]) => {
     if (!sessionId) return
-    
+
     try {
       await sendMessage(message, attachments)
       // Notify other collaborators via WebSocket
-      sendEvent('message_sent', { 
+      sendEvent('message_sent', {
         sessionId,
         projectId,
         message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       })
     } catch (error) {
       console.error('Failed to send message:', error)
@@ -81,7 +76,7 @@ export default function ChatInterface({
 
   const handleChoiceSelect = async (choiceId: string) => {
     if (!sessionId) return
-    
+
     try {
       await selectChoice(choiceId)
       // Notify other collaborators via WebSocket
@@ -89,7 +84,7 @@ export default function ChatInterface({
         sessionId,
         projectId,
         choiceId,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       })
     } catch (error) {
       console.error('Failed to select choice:', error)
@@ -99,18 +94,18 @@ export default function ChatInterface({
   const handleFileUpload = async (files: File[]) => {
     // Handle file upload logic
     const fileIds: string[] = []
-    
+
     for (const file of files) {
       try {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('projectId', projectId)
-        
+
         const response = await fetch('/api/v1/media/upload', {
           method: 'POST',
           body: formData,
         })
-        
+
         if (response.ok) {
           const result = await response.json()
           fileIds.push(result.id)
@@ -119,11 +114,11 @@ export default function ChatInterface({
         console.error('File upload failed:', error)
       }
     }
-    
+
     if (fileIds.length > 0) {
-      await handleSendMessage('I\'ve uploaded some files for reference.', fileIds)
+      await handleSendMessage("I've uploaded some files for reference.", fileIds)
     }
-    
+
     setShowFileUpload(false)
   }
 
@@ -133,27 +128,25 @@ export default function ChatInterface({
       <div className="bg-slate-800 px-6 py-4 border-b border-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-white">
-              {projectTitle} - Chat
-            </h2>
+            <h2 className="text-lg font-semibold text-white">{projectTitle} - Chat</h2>
             {currentStep && (
               <span className="bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full text-sm">
                 {currentStep}
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center gap-4">
             {/* Connection Status */}
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
-              }`} />
-              <span className="text-slate-400 text-sm">
-                {connectionStatus}
-              </span>
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                }`}
+              />
+              <span className="text-slate-400 text-sm">{connectionStatus}</span>
             </div>
-            
+
             {/* File Upload Toggle */}
             <button
               onClick={() => setShowFileUpload(!showFileUpload)}
@@ -161,17 +154,22 @@ export default function ChatInterface({
               title="Upload files"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                />
               </svg>
             </button>
           </div>
         </div>
-        
+
         {/* Progress Indicator */}
         {progress && (
           <div className="mt-4">
-            <ProgressIndicator 
-              currentStep={currentStep}
+            <ProgressIndicator
+              currentStep={currentStep || undefined}
               progress={progress}
               totalSteps={10} // TODO: Get from project settings
             />
@@ -182,7 +180,7 @@ export default function ChatInterface({
       {/* File Upload Area */}
       {showFileUpload && (
         <div className="bg-slate-800 border-b border-slate-700">
-          <FileUpload 
+          <FileUpload
             onUpload={handleFileUpload}
             onCancel={() => setShowFileUpload(false)}
             projectId={projectId}
@@ -192,17 +190,17 @@ export default function ChatInterface({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-hidden">
-        <MessageList 
+        <MessageList
           messages={messages}
           isLoading={isLoading}
-          currentStep={currentStep}
+          currentStep={currentStep || undefined}
         />
       </div>
 
       {/* Choice Selector */}
       {currentChoices && currentChoices.length > 0 && (
         <div className="bg-slate-800 border-t border-slate-700 px-6 py-4">
-          <ChoiceSelector 
+          <ChoiceSelector
             choices={currentChoices}
             onSelect={handleChoiceSelect}
             disabled={isLoading}
@@ -212,13 +210,13 @@ export default function ChatInterface({
 
       {/* Input Area */}
       <div className="bg-slate-800 border-t border-slate-700">
-        <InputArea 
+        <InputArea
           onSendMessage={handleSendMessage}
           disabled={isLoading || !isConnected}
           placeholder={
-            currentChoices && currentChoices.length > 0 
-              ? "Select a choice above or type a custom message..."
-              : "Type your message..."
+            currentChoices && currentChoices.length > 0
+              ? 'Select a choice above or type a custom message...'
+              : 'Type your message...'
           }
         />
       </div>

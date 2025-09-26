@@ -9,10 +9,7 @@ export async function POST(request: NextRequest) {
     const { sessionId, choiceId, customInput } = body
 
     if (!sessionId || !choiceId) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     // Get session
@@ -22,11 +19,14 @@ export async function POST(request: NextRequest) {
     })
 
     if (!session) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
+
+    // Get project to access progress
+    const project = await payload.findByID({
+      collection: 'projects',
+      id: session.project,
+    })
 
     // Handle manual override
     if (choiceId === 'manual_override') {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // Process choice selection
     let aiResponse = ''
     let nextStep = session.currentStep
-    
+
     if (choiceId === 'manual_override') {
       aiResponse = `I understand you want to ${customInput}. Let me help you with that specific direction.`
     } else if (choiceId === 'develop_story') {
@@ -55,8 +55,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Add to conversation history
+    const currentHistory = Array.isArray(session.conversationHistory)
+      ? session.conversationHistory
+      : []
     const updatedHistory = [
-      ...(session.conversationHistory || []),
+      ...currentHistory,
       {
         id: Date.now().toString(),
         role: 'assistant',
@@ -108,15 +111,14 @@ export async function POST(request: NextRequest) {
       response: aiResponse,
       choices,
       currentStep: nextStep,
-      progress: Math.min((session.progress?.overallProgress || 0) + 10, 100),
+      progress: Math.min((project?.progress?.overallProgress || 0) + 10, 100),
     })
-
   } catch (error) {
     console.error('Chat choice processing error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
       },
       { status: 500 }
     )

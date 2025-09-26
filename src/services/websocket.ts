@@ -37,7 +37,7 @@ export class WebSocketService {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const wsPort = process.env.NEXT_PUBLIC_WS_PORT || '3001'
     const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.hostname
-    
+
     const params = new URLSearchParams()
     if (sessionId) params.append('sessionId', sessionId)
     if (projectId) params.append('projectId', projectId)
@@ -58,7 +58,7 @@ export class WebSocketService {
       try {
         this.ws = new WebSocket(this.url)
 
-        this.ws.onopen = (event) => {
+        this.ws.onopen = _event => {
           console.log('WebSocket connected')
           this.isConnecting = false
           this.reconnectAttempts = 0
@@ -67,7 +67,7 @@ export class WebSocketService {
           resolve()
         }
 
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data)
             this.handleMessage(message)
@@ -77,7 +77,7 @@ export class WebSocketService {
           }
         }
 
-        this.ws.onclose = (event) => {
+        this.ws.onclose = event => {
           console.log('WebSocket disconnected:', event.code, event.reason)
           this.isConnecting = false
           this.stopPingInterval()
@@ -89,13 +89,12 @@ export class WebSocketService {
           }
         }
 
-        this.ws.onerror = (event) => {
+        this.ws.onerror = event => {
           console.error('WebSocket error:', event)
           this.isConnecting = false
           this.handlers.onError?.({ error: 'WebSocket connection error', event })
           reject(new Error('WebSocket connection failed'))
         }
-
       } catch (error) {
         this.isConnecting = false
         console.error('Error creating WebSocket connection:', error)
@@ -109,12 +108,12 @@ export class WebSocketService {
   disconnect(): void {
     this.shouldReconnect = false
     this.stopPingInterval()
-    
+
     if (this.ws) {
       this.ws.close(1000, 'Client disconnect')
       this.ws = null
     }
-    
+
     this.connectionId = null
   }
 
@@ -162,7 +161,7 @@ export class WebSocketService {
   }
 
   // Set event handlers
-  on(event: keyof WebSocketEventHandlers, handler: Function): void {
+  on(event: keyof WebSocketEventHandlers, handler: (...args: any[]) => void): void {
     this.handlers[event] = handler as any
   }
 
@@ -254,9 +253,14 @@ export class WebSocketService {
     }
 
     this.reconnectAttempts++
-    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), this.maxReconnectDelay)
+    const delay = Math.min(
+      this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+      this.maxReconnectDelay
+    )
 
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+    console.log(
+      `Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+    )
 
     setTimeout(() => {
       if (this.shouldReconnect) {
@@ -269,7 +273,7 @@ export class WebSocketService {
 
   private startPingInterval(): void {
     this.stopPingInterval()
-    
+
     // Send ping every 30 seconds to keep connection alive
     this.pingInterval = setInterval(() => {
       if (this.isConnected()) {
@@ -289,9 +293,12 @@ export class WebSocketService {
 // Singleton instance for default WebSocket connection
 let defaultWebSocketService: WebSocketService | null = null
 
-export function getWebSocketService(sessionId?: string, projectId?: string, userId?: string): WebSocketService {
-  if (!defaultWebSocketService || 
-      (sessionId && !defaultWebSocketService.isConnected())) {
+export function getWebSocketService(
+  sessionId?: string,
+  projectId?: string,
+  userId?: string
+): WebSocketService {
+  if (!defaultWebSocketService || (sessionId && !defaultWebSocketService.isConnected())) {
     defaultWebSocketService = new WebSocketService(sessionId, projectId, userId)
   }
   return defaultWebSocketService
@@ -317,7 +324,7 @@ export function useWebSocket(sessionId?: string, projectId?: string, userId?: st
     setWs(wsService)
 
     // Set up event handlers
-    wsService.on('onConnection', (data) => {
+    wsService.on('onConnection', data => {
       setIsConnected(true)
       setConnectionId(data.connectionId)
       setError(null)
@@ -328,7 +335,7 @@ export function useWebSocket(sessionId?: string, projectId?: string, userId?: st
       setConnectionId(null)
     })
 
-    wsService.on('onError', (error) => {
+    wsService.on('onError', error => {
       setError(error)
     })
 
@@ -340,7 +347,7 @@ export function useWebSocket(sessionId?: string, projectId?: string, userId?: st
     // Cleanup on unmount
     return () => {
       wsService.off('onConnection')
-      wsService.off('onDisconnection') 
+      wsService.off('onDisconnection')
       wsService.off('onError')
     }
   }, [sessionId, projectId, userId])
@@ -355,7 +362,7 @@ export function useWebSocket(sessionId?: string, projectId?: string, userId?: st
     leaveSession: ws?.leaveSession.bind(ws),
     sendChatMessage: ws?.sendChatMessage.bind(ws),
     sendTypingStart: ws?.sendTypingStart.bind(ws),
-    sendTypingStop: ws?.sendTypingStop.bind(ws)
+    sendTypingStop: ws?.sendTypingStop.bind(ws),
   }
 }
 

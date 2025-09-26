@@ -4,14 +4,15 @@ import config from '@payload-config'
 import type { Project, User } from '@/payload-types'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
     userId: string
-  }
+  }>
 }
 
 // DELETE /api/v1/projects/[id]/collaborators/[userId] - Remove a collaborator from a project
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { id, userId } = await params
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,11 +22,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const payload = await getPayload({ config })
 
     // Check if project exists
-    const project = await payload.findByID({
+    const project = (await payload.findByID({
       collection: 'projects',
-      id: params.id,
-      depth: 1
-    }) as Project & { createdBy: User; collaborators: User[] }
+      id: id,
+      depth: 1,
+    })) as Project & { createdBy: User; collaborators: User[] }
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
@@ -34,7 +35,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // TODO: Check if user has permission to remove collaborators (owner or admin)
     // const currentUserId = getUserFromAuth(authHeader)
     // if (project.createdBy.id !== currentUserId) {
-    //   return NextResponse.json({ 
+    //   return NextResponse.json({
     //     error: 'Insufficient permissions',
     //     message: 'Only project creators can remove collaborators'
     //   }, { status: 403 })
@@ -42,41 +43,42 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Check if the user is actually a collaborator
     const currentCollaborators = project.collaborators || []
-    const collaboratorExists = currentCollaborators.some(c => c.id === params.userId)
+    const collaboratorExists = currentCollaborators.some(
+      c => (typeof c === 'string' ? c : c.id) === userId
+    )
 
     if (!collaboratorExists) {
-      return NextResponse.json({
-        error: 'Collaborator not found',
-        message: 'The specified user is not a collaborator on this project'
-      }, { status: 404 })
+      return NextResponse.json(
+        {
+          error: 'Collaborator not found',
+          message: 'The specified user is not a collaborator on this project',
+        },
+        { status: 404 }
+      )
     }
 
     // Remove the collaborator
     const updatedCollaborators = currentCollaborators
-      .filter(c => c.id !== params.userId)
-      .map(c => c.id)
+      .filter(c => (typeof c === 'string' ? c : c.id) !== userId)
+      .map(c => (typeof c === 'string' ? c : c.id))
 
     await payload.update({
       collection: 'projects',
-      id: params.id,
+      id: id,
       data: {
-        collaborators: updatedCollaborators
-      }
+        collaborators: updatedCollaborators,
+      },
     })
 
     // Return 204 No Content
     return new NextResponse(null, { status: 204 })
-
   } catch (error) {
     console.error('Error removing collaborator:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid project or user ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

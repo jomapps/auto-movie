@@ -4,13 +4,14 @@ import config from '@payload-config'
 import type { Media } from '@/payload-types'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // GET /api/v1/media/[id] - Get detailed media information
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -18,13 +19,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const payload = await getPayload({ config })
-    
+
     // Find media with related data
-    const media = await payload.findByID({
+    const media = (await payload.findByID({
       collection: 'media',
-      id: params.id,
-      depth: 2 // Include project and other relationships
-    }) as Media
+      id: id,
+      depth: 2, // Include project and other relationships
+    })) as Media
 
     if (!media) {
       return NextResponse.json({ error: 'Media not found' }, { status: 404 })
@@ -43,52 +44,51 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       filename: media.filename || 'unknown',
       mediaType: media.mediaType || 'style_reference',
       agentGenerated: media.agentGenerated || false,
-      generationMetadata: media.agentGenerated ? {
-        agentId: media.generationMetadata?.agentId || '',
-        promptUsed: media.generationMetadata?.promptUsed || '',
-        modelVersion: media.generationMetadata?.modelVersion || '',
-        generationTime: media.generationMetadata?.generationTime || media.createdAt,
-        taskId: media.generationMetadata?.taskId || ''
-      } : null,
+      generationMetadata: media.agentGenerated
+        ? {
+            agentId: media.generationMetadata?.agentId || '',
+            promptUsed: media.generationMetadata?.promptUsed || '',
+            modelVersion: media.generationMetadata?.modelVersion || '',
+            generationTime: media.generationMetadata?.generationTime || media.createdAt,
+            taskId: media.generationMetadata?.taskId || '',
+          }
+        : null,
       description: media.description || '',
       tags: media.tags || [],
       relatedElements: {
         characters: media.relatedElements?.characters || [],
         episode: media.relatedElements?.episode || null,
         scene: media.relatedElements?.scene || '',
-        timestamp: media.relatedElements?.timestamp || null
+        timestamp: media.relatedElements?.timestamp || null,
       },
       technicalData: {
         duration: media.technicalData?.duration || null,
         resolution: media.technicalData?.resolution || '',
         fps: media.technicalData?.fps || null,
-        sampleRate: media.technicalData?.sampleRate || null
+        sampleRate: media.technicalData?.sampleRate || null,
       },
       version: media.version || 1,
       status: media.status || 'active',
       embedding: media.embedding || [],
       createdAt: media.createdAt,
-      updatedAt: media.updatedAt
+      updatedAt: media.updatedAt,
     }
 
     return NextResponse.json(response)
-
   } catch (error) {
     console.error('Error fetching media:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid media ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // PUT /api/v1/media/[id] - Update media metadata
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -101,8 +101,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // First check if media exists
     const existingMedia = await payload.findByID({
       collection: 'media',
-      id: params.id,
-      depth: 1
+      id: id,
+      depth: 1,
     })
 
     if (!existingMedia) {
@@ -117,42 +117,39 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Prepare update data (only allow certain fields to be updated)
     const updateData: any = {}
-    
+
     if (data.description !== undefined) updateData.description = data.description
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.relatedElements !== undefined) {
       updateData.relatedElements = {
         ...existingMedia.relatedElements,
-        ...data.relatedElements
+        ...data.relatedElements,
       }
     }
 
     // Update media
     await payload.update({
       collection: 'media',
-      id: params.id,
-      data: updateData
+      id: id,
+      data: updateData,
     })
 
     // Return the updated media using the same format as GET
     return GET(request, { params })
-
   } catch (error) {
     console.error('Error updating media:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid media ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/v1/media/[id] - Delete a media file
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -164,8 +161,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Check if media exists and user has access
     const media = await payload.findByID({
       collection: 'media',
-      id: params.id,
-      depth: 1
+      id: id,
+      depth: 1,
     })
 
     if (!media) {
@@ -181,22 +178,18 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Delete media (PayloadCMS will handle file cleanup via hooks)
     await payload.delete({
       collection: 'media',
-      id: params.id
+      id: id,
     })
 
     // Return 204 No Content
     return new NextResponse(null, { status: 204 })
-
   } catch (error) {
     console.error('Error deleting media:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid media ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

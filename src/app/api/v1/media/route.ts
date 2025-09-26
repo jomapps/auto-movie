@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { Media, Project } from '@/payload-types'
+import type { Media } from '@/payload-types'
 
 // GET /api/v1/media - List project media with filtering
 export async function GET(request: NextRequest) {
@@ -20,12 +20,15 @@ export async function GET(request: NextRequest) {
 
     // Validate required projectId parameter
     if (!projectId) {
-      return NextResponse.json({
-        error: 'Validation failed',
-        details: {
-          projectId: 'projectId parameter is required'
-        }
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: {
+            projectId: 'projectId parameter is required',
+          },
+        },
+        { status: 400 }
+      )
     }
 
     const payload = await getPayload({ config })
@@ -34,7 +37,7 @@ export async function GET(request: NextRequest) {
     const project = await payload.findByID({
       collection: 'projects',
       id: projectId,
-      depth: 0
+      depth: 0,
     })
 
     if (!project) {
@@ -49,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     // Build query filters
     const where: any = {
-      project: { equals: projectId }
+      project: { equals: projectId },
     }
 
     if (mediaType) {
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       depth: 1,
-      sort: '-createdAt'
+      sort: '-createdAt',
     })
 
     // Format response according to contract
@@ -83,31 +86,27 @@ export async function GET(request: NextRequest) {
         technicalData: {
           duration: media.technicalData?.duration,
           resolution: media.technicalData?.resolution,
-          fps: media.technicalData?.fps
+          fps: media.technicalData?.fps,
         },
         status: media.status || 'active',
-        createdAt: media.createdAt
+        createdAt: media.createdAt,
       })),
       pagination: {
         page: result.page || 1,
         limit: result.limit,
         total: result.totalDocs,
-        pages: result.totalPages
-      }
+        pages: result.totalPages,
+      },
     }
 
     return NextResponse.json(response)
-
   } catch (error) {
     console.error('Error fetching media:', error)
-    
-    if (error.message?.includes('Invalid ObjectId')) {
+
+    if (error instanceof Error && error.message?.includes('Invalid ObjectId')) {
       return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

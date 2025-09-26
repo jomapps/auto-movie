@@ -9,10 +9,7 @@ export async function POST(request: NextRequest) {
     const { projectId, sessionId, message } = body
 
     if (!projectId || !message) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     // Get or create session
@@ -39,8 +36,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Add message to conversation history
+    const currentHistory = Array.isArray(session.conversationHistory)
+      ? session.conversationHistory
+      : []
     const updatedHistory = [
-      ...(session.conversationHistory || []),
+      ...currentHistory,
       {
         id: Date.now().toString(),
         role: 'user',
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Generate AI response (placeholder)
     const aiResponse = `Thank you for your message about the movie concept. I understand you want to ${message.toLowerCase()}. Let me help you develop this further.`
-    
+
     updatedHistory.push({
       id: (Date.now() + 1).toString(),
       role: 'assistant',
@@ -103,13 +103,12 @@ export async function POST(request: NextRequest) {
       currentStep: session.currentStep,
       progress: 5, // Basic progress increment
     })
-
   } catch (error) {
     console.error('Chat message processing error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
       },
       { status: 500 }
     )

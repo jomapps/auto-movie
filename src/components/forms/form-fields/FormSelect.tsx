@@ -15,24 +15,16 @@ interface FormSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElem
 }
 
 export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
-  ({ options, placeholder, error, className = '', ...props }, ref) => {
+  ({ options, placeholder, error: _error, className = '', ...props }, ref) => {
     return (
-      <select
-        ref={ref}
-        className={className}
-        {...props}
-      >
+      <select ref={ref} className={className} {...props}>
         {placeholder && (
           <option value="" disabled>
             {placeholder}
           </option>
         )}
-        {options.map((option) => (
-          <option 
-            key={option.value} 
-            value={option.value}
-            disabled={option.disabled}
-          >
+        {options.map(option => (
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}

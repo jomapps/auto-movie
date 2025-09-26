@@ -68,14 +68,14 @@ export class AppError extends Error {
     requestId?: string
   ) {
     super(message)
-    
+
     this.name = this.constructor.name
     this.type = type
     this.statusCode = statusCode
     this.isOperational = isOperational
     this.metadata = metadata
     this.requestId = requestId
-    
+
     Error.captureStackTrace(this, this.constructor)
   }
 }
@@ -89,21 +89,18 @@ export class Logger {
 
   constructor(context: string = 'App', minLevel?: LogLevel) {
     this.context = context
-    this.minLevel = minLevel ?? (process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG)
+    this.minLevel =
+      minLevel ?? (process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG)
   }
 
   private shouldLog(level: LogLevel): boolean {
     return level <= this.minLevel
   }
 
-  private formatMessage(
-    level: LogLevel,
-    message: string,
-    metadata?: Record<string, any>
-  ): string {
+  private formatMessage(level: LogLevel, message: string, metadata?: Record<string, any>): string {
     const timestamp = new Date().toISOString()
     const levelName = LogLevel[level]
-    
+
     const logEntry: LogEntry = {
       timestamp,
       level,
@@ -116,7 +113,7 @@ export class Logger {
     if (process.env.NODE_ENV === 'production') {
       return JSON.stringify(logEntry)
     }
-    
+
     // In development, use readable format
     const metaStr = metadata ? ` ${JSON.stringify(metadata, null, 2)}` : ''
     return `[${timestamp}] ${levelName} [${this.context}]: ${message}${metaStr}`
@@ -126,7 +123,7 @@ export class Logger {
     if (!this.shouldLog(level)) return
 
     const formattedMessage = this.formatMessage(level, message, metadata)
-    
+
     // Write to appropriate stream
     if (level <= LogLevel.WARN) {
       console.error(formattedMessage)
@@ -146,7 +143,7 @@ export class Logger {
     }
   }
 
-  private async sendToExternalLogger(entry: LogEntry): Promise<void> {
+  private async sendToExternalLogger(_entry: LogEntry): Promise<void> {
     try {
       // TODO: Integrate with external logging service (e.g., Winston, Datadog, etc.)
       // Example implementation:
@@ -180,7 +177,7 @@ export class Logger {
         },
       }),
     }
-    
+
     this.writeLog(LogLevel.ERROR, message, logMetadata)
   }
 
@@ -206,10 +203,10 @@ export class Logger {
       method: req.method,
       url: req.url,
       userAgent: req.headers.get('user-agent'),
-      ip: req.headers.get('x-forwarded-for') || req.ip,
+      ip: req.headers.get('x-forwarded-for') || 'unknown',
       ...metadata,
     }
-    
+
     this.info('Incoming request', requestMetadata)
   }
 
@@ -226,8 +223,9 @@ export class Logger {
       duration: `${duration}ms`,
       ...metadata,
     }
-    
-    const level = res.status >= 500 ? LogLevel.ERROR : res.status >= 400 ? LogLevel.WARN : LogLevel.INFO
+
+    const level =
+      res.status >= 500 ? LogLevel.ERROR : res.status >= 400 ? LogLevel.WARN : LogLevel.INFO
     this.writeLog(level, 'Request completed', responseMetadata)
   }
 }
@@ -246,13 +244,9 @@ export const wsLogger = new Logger('WebSocket')
  * Error handler middleware
  */
 export function createErrorHandler() {
-  return async (
-    error: Error,
-    req: NextRequest,
-    context?: string
-  ): Promise<NextResponse> => {
+  return async (error: Error, req: NextRequest, context?: string): Promise<NextResponse> => {
     const requestId = req.headers.get('x-request-id') || crypto.randomUUID()
-    
+
     // Log the error
     const contextLogger = context ? new Logger(context) : logger
     contextLogger.error('Request error', error, {
@@ -307,9 +301,7 @@ export function createErrorHandler() {
     return NextResponse.json(
       {
         success: false,
-        error: process.env.NODE_ENV === 'production' 
-          ? 'Internal server error' 
-          : error.message,
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
         code: ErrorType.SYSTEM,
         requestId,
         ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
@@ -329,24 +321,24 @@ export function createRequestLogger() {
   ): Promise<NextResponse> => {
     const startTime = Date.now()
     const requestId = crypto.randomUUID()
-    
+
     // Add request ID to headers
     req.headers.set('x-request-id', requestId)
-    
+
     // Log incoming request
     logger.logRequest(req, { requestId })
-    
+
     try {
       // Execute handler
       const response = await handler(req)
-      
+
       // Log response
       const duration = Date.now() - startTime
       logger.logResponse(req, response, duration, { requestId })
-      
+
       // Add request ID to response headers
       response.headers.set('x-request-id', requestId)
-      
+
       return response
     } catch (error) {
       // Log error and handle it
@@ -355,7 +347,7 @@ export function createRequestLogger() {
         requestId,
         duration: `${duration}ms`,
       })
-      
+
       throw error
     }
   }
@@ -391,7 +383,9 @@ export async function safeAsync<T>(
   } catch (error) {
     if (context) {
       const contextLogger = new Logger(context)
-      contextLogger.warn('Safe async operation failed, using fallback', { error: error.message })
+      contextLogger.warn('Safe async operation failed, using fallback', {
+        error: error instanceof Error ? error.message : String(error),
+      })
     }
     return fallback
   }
@@ -435,13 +429,23 @@ export function logHealthCheck(
   details?: Record<string, any>
 ): void {
   const healthLogger = new Logger(`Health:${service}`)
-  const level = status === 'healthy' ? LogLevel.INFO : status === 'degraded' ? LogLevel.WARN : LogLevel.ERROR
-  
-  healthLogger.writeLog(level, `Service ${status}`, {
+  const level =
+    status === 'healthy' ? LogLevel.INFO : status === 'degraded' ? LogLevel.WARN : LogLevel.ERROR
+
+  const message = `Service ${status}`
+  const metadata = {
     service,
     status,
     ...details,
-  })
+  }
+
+  if (level === LogLevel.ERROR) {
+    healthLogger.error(message, undefined, metadata)
+  } else if (level === LogLevel.WARN) {
+    healthLogger.warn(message, metadata)
+  } else {
+    healthLogger.info(message, metadata)
+  }
 }
 
 /**
@@ -453,13 +457,23 @@ export function logSecurityEvent(
   details: Record<string, any>
 ): void {
   const securityLogger = new Logger('Security')
-  const level = severity === 'low' ? LogLevel.INFO : severity === 'medium' ? LogLevel.WARN : LogLevel.ERROR
-  
-  securityLogger.writeLog(level, `Security event: ${event}`, {
+  const level =
+    severity === 'low' ? LogLevel.INFO : severity === 'medium' ? LogLevel.WARN : LogLevel.ERROR
+
+  const message = `Security event: ${event}`
+  const metadata = {
     event,
     severity,
     ...details,
-  })
+  }
+
+  if (level === LogLevel.ERROR) {
+    securityLogger.error(message, undefined, metadata)
+  } else if (level === LogLevel.WARN) {
+    securityLogger.warn(message, metadata)
+  } else {
+    securityLogger.info(message, metadata)
+  }
 }
 
 export default {

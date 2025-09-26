@@ -7,15 +7,8 @@ interface FormNumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputE
 }
 
 export const FormNumberInput = forwardRef<HTMLInputElement, FormNumberInputProps>(
-  ({ error, className = '', ...props }, ref) => {
-    return (
-      <input
-        ref={ref}
-        type="number"
-        className={className}
-        {...props}
-      />
-    )
+  ({ error: _error, className = '', ...props }, ref) => {
+    return <input ref={ref} type="number" className={className} {...props} />
   }
 )
 
