@@ -4,7 +4,7 @@
  */
 
 import { AfterChangeHook, BeforeChangeHook, AfterDeleteHook } from 'payload/types'
-import { dbLogger } from '@/src/utils/logger'
+import { dbLogger } from '@/utils/logger'
 
 /**
  * Project progress calculation hook

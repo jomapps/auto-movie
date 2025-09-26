@@ -18,7 +18,19 @@
       "Bash(find:*)",
       "Bash(npm test)",
       "mcp__byterover-mcp__byterover-retrieve-knowledge",
-      "mcp__byterover-mcp__byterover-store-knowledge"
+      "mcp__byterover-mcp__byterover-store-knowledge",
+      "WebFetch(domain:r.jina.ai)",
+      "Bash(pnpm run:*)",
+      "Bash(timeout 10 pnpm run dev)",
+      "Bash(pnpm list:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm run lint)",
+      "Bash(pnpm build:*)",
+      "Bash(sed:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(mongod:*)"
     ],
     "deny": [],
     "ask": []

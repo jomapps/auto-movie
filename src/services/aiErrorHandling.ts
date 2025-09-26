@@ -3,7 +3,7 @@
  * Comprehensive error handling for AI/LLM service failures with graceful degradation
  */
 
-import { aiLogger, AppError, ErrorType } from '@/src/utils/logger'
+import { aiLogger, AppError, ErrorType } from '@/utils/logger'
 
 /**
  * AI service error types

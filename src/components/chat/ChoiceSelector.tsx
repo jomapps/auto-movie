@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/src/components/ui/Button'
+import { Button } from '@/components/ui/Button'
 
 interface Choice {
   id: string
@@ -185,7 +185,7 @@ export default function ChoiceSelector({
                   </p>
                   {choice.type === 'manual' && (
                     <p className="text-orange-400">
-                      <strong>Manual Override:</strong> You'll be able to provide custom instructions 
+                      <strong>Manual Override:</strong> You&apos;ll be able to provide custom instructions 
                       instead of following the standard workflow.
                     </p>
                   )}

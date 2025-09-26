@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayloadInstance } from '@/src/utils/getPayload'
-import { authLogger, AppError, ErrorType } from '@/src/utils/logger'
+import { getPayloadInstance } from '@/utils/getPayload'
+import { authLogger, AppError, ErrorType } from '@/utils/logger'
 
 /**
  * Subscription tier definitions

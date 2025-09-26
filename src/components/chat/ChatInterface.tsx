@@ -6,8 +6,8 @@ import InputArea from './InputArea'
 import ChoiceSelector from './ChoiceSelector'
 import FileUpload from './FileUpload'
 import ProgressIndicator from './ProgressIndicator'
-import { useChat } from '@/src/hooks/useChat'
-import { useWebSocket } from '@/src/hooks/useWebSocket'
+import { useChat } from '@/hooks/useChat'
+import { useWebSocket } from '@/hooks/useWebSocket'
 
 interface ChatInterfaceProps {
   projectId: string

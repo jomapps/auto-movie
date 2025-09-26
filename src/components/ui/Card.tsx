@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { cn } from '@/src/utils/cn'
+import { cn } from '@/utils/cn'
 
 const Card = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (

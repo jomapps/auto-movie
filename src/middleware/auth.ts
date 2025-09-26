@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { getPayloadInstance } from '@/src/utils/getPayload'
+import { getPayloadInstance } from '@/utils/getPayload'
 
 export interface AuthenticatedRequest extends NextRequest {
   user: {

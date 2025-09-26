@@ -353,7 +353,7 @@ export async function checkFileDuplicate(
   existingFileId?: string
 }> {
   try {
-    const { findDocuments } = await import('@/src/utils/getPayload')
+    const { findDocuments } = await import('@/utils/getPayload')
     
     const existingFiles = await findDocuments('media', {
       where: {

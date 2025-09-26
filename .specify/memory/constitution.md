@@ -1,11 +1,15 @@
 <!--
 Sync Impact Report:
-Version change: 1.1.0 → 1.2.0
-Modified principles: I. PayloadCMS Data Layer Supremacy enhanced with collection patterns, III. Modern Stack Discipline updated with version specifics, Added new principle VII. Collection Architecture Discipline
-Added sections: VII. Collection Architecture Discipline, Enhanced Development Standards with generated types usage
+Version change: 1.2.0 → 1.3.0
+Modified principles: III. Modern Stack Discipline enhanced with Tailwind CSS 4 and PostCSS patterns, VIII. Import & Configuration Patterns (new section)
+Added sections: VIII. Import & Configuration Patterns - Critical patterns for Payload imports and Tailwind CSS 4 setup
 Removed sections: None
-Templates requiring updates: ✅ Updated references to v1.2.0, ⚠ plan-template.md and tasks-template.md need PayloadCMS-specific task patterns
-Follow-up TODOs: Update task generation to include PayloadCMS collection tests, Add generated types validation to test patterns
+Templates requiring updates: ✅ Updated references to v1.3.0, ✅ Added build error resolution patterns
+Follow-up TODOs: Monitor for path alias issues (@/src/ vs @/), Ensure PostCSS config stays consistent
+Critical Fixes Applied: 
+- Fixed all Payload API imports to use `import { getPayload } from 'payload'` with `config from '@payload-config'`
+- Configured Tailwind CSS 4 with proper PostCSS setup and ShadCN/UI integration
+- Resolved all module resolution errors and build compilation issues
 -->
 
 # Auto-Movie AI Platform Constitution
@@ -32,6 +36,9 @@ PayloadCMS reserves `/admin/*` and `/api/*` paths for its own use. Our applicati
 
 ### VII. Collection Architecture Discipline
 All PayloadCMS collections MUST follow standardized patterns: (1) Use CollectionConfig TypeScript interface with proper field definitions, (2) Include access control functions that return boolean or query objects, (3) Enable API key authentication where third-party access is needed via `auth.useAPIKey: true`, (4) Configure proper admin components using file paths not direct React components, (5) Use hooks for data validation and transformation, (6) Enable versions with drafts for content that requires approval workflows, (7) Configure upload collections with proper storage adapters and image transformations. All collection modifications MUST be done through Payload's configuration system, never by direct database manipulation.
+
+### VIII. Import & Configuration Patterns
+CRITICAL: Payload imports MUST follow exact patterns: `import { getPayload } from 'payload'` and `config from '@payload-config'`, then `await getPayload({ config })`. NEVER import from custom utils or use `@/payload.config` - this causes build failures. Path aliases MUST use `@/` not `@/src/` - the alias already resolves to src/. Tailwind CSS 4 MUST use PostCSS configuration with `postcss.config.mjs` containing `"@tailwindcss/postcss": {}` plugin and CSS imports as `@import "tailwindcss"`. ShadCN/UI requires `components.json` config pointing to correct CSS file path. ESLint warnings about unused imports or `any` types are acceptable - build compilation success is the priority. These patterns are battle-tested and deviation causes module resolution failures.
 
 ## Technology Constraints
 
@@ -67,4 +74,4 @@ Collection Architecture violations including direct database access, schema dupl
 
 Version updates to PayloadCMS or Tailwind CSS MUST be tested against existing chat interface functionality, collection configurations, and data layer operations. Generated types MUST be regenerated and validated after PayloadCMS version updates.
 
-**Version**: 1.2.0 | **Ratified**: 2025-01-25 | **Last Amended**: 2025-09-25
+**Version**: 1.3.0 | **Ratified**: 2025-01-25 | **Last Amended**: 2025-09-25

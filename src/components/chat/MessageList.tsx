@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Loading } from '@/src/components/ui/Loading'
+import { Loading } from '@/components/ui/Loading'
 
 interface Message {
   id: string
