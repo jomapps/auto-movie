@@ -49,6 +49,34 @@ export async function createProject(
     // Get PayloadCMS instance
     const payload = await getPayload({ config })
 
+    // Get or create a default user for development
+    // First, try to find an existing user
+    let defaultUser
+    try {
+      const users = await payload.find({
+        collection: 'users',
+        limit: 1,
+      })
+
+      if (users.docs.length > 0) {
+        defaultUser = users.docs[0]
+      } else {
+        // Create a default user if none exists
+        defaultUser = await payload.create({
+          collection: 'users',
+          data: {
+            email: 'default@auto-movie.com',
+            password: 'temp-password-123',
+            name: 'Default User',
+            role: 'user',
+          },
+        })
+      }
+    } catch (userError) {
+      console.error('Error handling default user:', userError)
+      throw new Error('Failed to get or create default user')
+    }
+
     // Create project via PayloadCMS Local API
     const result = await payload.create({
       collection: 'projects',
@@ -60,7 +88,7 @@ export async function createProject(
         targetAudience: validatedData.targetAudience,
         status: 'concept', // Default status for new projects
         projectSettings: validatedData.projectSettings,
-        createdBy: 'temp-user', // TODO: Replace with actual user ID from auth
+        createdBy: defaultUser.id, // Use actual user ID
       },
     })
 

@@ -88,9 +88,10 @@ export const Projects: CollectionConfig = {
       name: 'createdBy',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      required: false, // Made optional for development - TODO: Make required when auth is implemented
       admin: {
         position: 'sidebar',
+        description: 'User who created this project',
       },
     },
     {

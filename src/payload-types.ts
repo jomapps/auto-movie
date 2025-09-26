@@ -328,7 +328,10 @@ export interface Project {
   episodeCount: number;
   targetAudience?: ('children' | 'family' | 'teen' | 'adult') | null;
   status: 'concept' | 'pre-production' | 'production' | 'post-production' | 'completed' | 'on-hold';
-  createdBy: string | User;
+  /**
+   * User who created this project
+   */
+  createdBy?: (string | null) | User;
   /**
    * Users who can edit this project
    */
