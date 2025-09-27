@@ -13,6 +13,12 @@ export const projectSchema = z.object({
       message: 'Please select a valid genre',
     }
   ),
+  status: z.enum(
+    ['concept', 'pre-production', 'production', 'post-production', 'completed', 'on-hold'],
+    {
+      message: 'Please select a valid project status',
+    }
+  ),
   episodeCount: z
     .number()
     .int('Episode count must be a whole number')
@@ -26,6 +32,22 @@ export const projectSchema = z.object({
     })
     .optional()
     .default('family'),
+  progress: z
+    .object({
+      currentPhase: z.enum(
+        ['story_development', 'character_creation', 'visual_design', 'audio_design', 'scene_production', 'post_production', 'final_assembly'],
+        {
+          message: 'Please select a valid current phase',
+        }
+      ),
+      overallProgress: z
+        .number()
+        .min(0, 'Progress cannot be less than 0%')
+        .max(100, 'Progress cannot exceed 100%')
+        .int('Progress must be a whole number'),
+      completedSteps: z.array(z.string()).default([]),
+    })
+    .optional(),
   projectSettings: z
     .object({
       aspectRatio: z
@@ -71,7 +93,7 @@ export const projectFiltersSchema = z.object({
   status: z
     .enum(['concept', 'pre-production', 'production', 'post-production', 'completed', 'on-hold'])
     .optional(),
-  sortBy: z.enum(['createdAt', 'updatedAt', 'title', 'status', 'progress']).default('updatedAt'),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'title', 'status', 'progress.overallProgress']).default('updatedAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   search: z.string().optional(),
 })

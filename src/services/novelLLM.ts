@@ -32,14 +32,17 @@ export interface ProjectContext {
   settings?: Record<string, any>
 }
 
-class NovelLLMService {
+class OpenRouterLLMService {
   private baseUrl: string
   private apiKey: string
+  private defaultModel: string
+  private backupModel: string
 
   constructor() {
-    this.baseUrl =
-      process.env.LLM_BASE_URL || process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1'
-    this.apiKey = process.env.LLM_API_KEY || process.env.OPENROUTER_API_KEY || ''
+    this.baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1'
+    this.apiKey = process.env.OPENROUTER_API_KEY || ''
+    this.defaultModel = process.env.OPENROUTER_DEFAULT_MODEL || 'anthropic/claude-sonnet-4'
+    this.backupModel = process.env.OPENROUTER_BACKUP_MODEL || 'qwen/qwen3-vl-235b-a22b-thinking'
   }
 
   /**
@@ -55,12 +58,11 @@ class NovelLLMService {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
+          'HTTP-Referer': 'https://auto-movie.app',
+          'X-Title': 'Auto Movie Platform',
         },
         body: JSON.stringify({
-          model:
-            process.env.LLM_DEFAULT_MODEL ||
-            process.env.OPENROUTER_DEFAULT_MODEL ||
-            'qwen/qwen3-vl-235b-a22b-thinking',
+          model: this.defaultModel,
           messages: fullMessages,
           temperature: 0.7,
           max_tokens: 2000,
@@ -284,5 +286,8 @@ Make this transition feel natural and progressive.`
 }
 
 // Export singleton instance
-export const novelLLMService = new NovelLLMService()
-export default novelLLMService
+export const openRouterLLMService = new OpenRouterLLMService()
+export default openRouterLLMService
+
+// Keep backward compatibility alias
+export const novelLLMService = openRouterLLMService

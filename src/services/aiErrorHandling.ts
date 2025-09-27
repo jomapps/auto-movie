@@ -90,45 +90,32 @@ export class AIServiceManager {
   }
 
   private initializeServices(): void {
-    // Primary AI service (Novel LLM)
-    if (process.env.NOVEL_LLM_API_KEY) {
+    // Primary AI service (OpenRouter)
+    if (process.env.OPENROUTER_API_KEY) {
       this.services.push({
-        name: 'novel-llm',
-        baseUrl: process.env.NOVEL_LLM_BASE_URL || 'https://api.novellm.com/v1',
-        apiKey: process.env.NOVEL_LLM_API_KEY,
-        model: 'gpt-4-turbo-preview',
+        name: 'openrouter',
+        baseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+        apiKey: process.env.OPENROUTER_API_KEY,
+        model: process.env.OPENROUTER_DEFAULT_MODEL || 'anthropic/claude-sonnet-4',
         timeout: 30000,
         maxRetries: 3,
         retryDelay: 1000,
         priority: 1,
       })
-    }
 
-    // Fallback services
-    if (process.env.OPENAI_API_KEY) {
-      this.services.push({
-        name: 'openai',
-        baseUrl: 'https://api.openai.com/v1',
-        apiKey: process.env.OPENAI_API_KEY,
-        model: 'gpt-4-turbo-preview',
-        timeout: 30000,
-        maxRetries: 2,
-        retryDelay: 2000,
-        priority: 2,
-      })
-    }
-
-    if (process.env.ANTHROPIC_API_KEY) {
-      this.services.push({
-        name: 'anthropic',
-        baseUrl: 'https://api.anthropic.com/v1',
-        apiKey: process.env.ANTHROPIC_API_KEY,
-        model: 'claude-3-sonnet-20240229',
-        timeout: 30000,
-        maxRetries: 2,
-        retryDelay: 2000,
-        priority: 3,
-      })
+      // Backup model on same service
+      if (process.env.OPENROUTER_BACKUP_MODEL) {
+        this.services.push({
+          name: 'openrouter-backup',
+          baseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+          apiKey: process.env.OPENROUTER_API_KEY,
+          model: process.env.OPENROUTER_BACKUP_MODEL,
+          timeout: 30000,
+          maxRetries: 2,
+          retryDelay: 2000,
+          priority: 2,
+        })
+      }
     }
 
     // Sort by priority
@@ -258,8 +245,9 @@ export class AIServiceManager {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${service.apiKey}`,
-          ...(service.name === 'anthropic' && {
-            'anthropic-version': '2023-06-01',
+          ...(service.name.startsWith('openrouter') && {
+            'HTTP-Referer': 'https://auto-movie.app',
+            'X-Title': 'Auto Movie Platform',
           }),
         },
         body: JSON.stringify(requestBody),
@@ -301,15 +289,8 @@ export class AIServiceManager {
 
     // Service-specific adjustments
     switch (service.name) {
-      case 'anthropic':
-        return {
-          ...baseBody,
-          max_tokens: baseBody.max_tokens,
-          system: context.systemPrompt || undefined,
-        }
-
-      case 'openai':
-      case 'novel-llm':
+      case 'openrouter':
+      case 'openrouter-backup':
       default:
         return {
           ...baseBody,

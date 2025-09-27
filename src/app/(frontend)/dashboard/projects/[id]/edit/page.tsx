@@ -6,16 +6,17 @@ import { updateProject } from '@/actions/update-project'
 import { ProjectForm } from '@/components/forms/ProjectForm'
 import { ProjectNotFound } from '@/components/ui/EmptyState'
 import { ProjectFormErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { StatusBadge, ProgressBar } from '@/components/ui'
 import type { Project } from '@/payload-types'
 
 interface EditProjectPageProps {
-  params: Promise<{
+  params: {
     id: string
-  }>
+  }
 }
 
 export default async function EditProjectPage({ params }: EditProjectPageProps) {
-  const { id } = await params
+  const { id } = params
   const result = await getProject(id)
 
   if (!result.success || !result.data) {
@@ -27,7 +28,7 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
 
   const project = result.data
 
-  const handleUpdateProject = async (data: any) => {
+  const handleUpdateProject = async (data: any): Promise<void> => {
     'use server'
 
     const formData = new FormData()
@@ -40,21 +41,23 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
     if (data.targetAudience) formData.append('targetAudience', data.targetAudience)
     if (data.status) formData.append('status', data.status)
 
-    // Project settings
+    // Project settings (nested structure)
     if (data.projectSettings) {
       if (data.projectSettings.aspectRatio)
-        formData.append('aspectRatio', data.projectSettings.aspectRatio)
+        formData.append('projectSettings.aspectRatio', data.projectSettings.aspectRatio)
       if (data.projectSettings.episodeDuration)
-        formData.append('episodeDuration', data.projectSettings.episodeDuration.toString())
+        formData.append('projectSettings.episodeDuration', data.projectSettings.episodeDuration.toString())
       if (data.projectSettings.qualityTier)
-        formData.append('qualityTier', data.projectSettings.qualityTier)
+        formData.append('projectSettings.qualityTier', data.projectSettings.qualityTier)
     }
 
-    // Progress (if updated)
+    // Progress (nested structure)
     if (data.progress) {
-      if (data.progress.currentPhase) formData.append('currentPhase', data.progress.currentPhase)
+      if (data.progress.currentPhase) formData.append('progress.currentPhase', data.progress.currentPhase)
       if (data.progress.overallProgress !== undefined)
-        formData.append('overallProgress', data.progress.overallProgress.toString())
+        formData.append('progress.overallProgress', data.progress.overallProgress.toString())
+      if (data.progress.completedSteps)
+        formData.append('progress.completedSteps', JSON.stringify(data.progress.completedSteps))
     }
 
     const updateResult = await updateProject(id, null, formData)
@@ -128,24 +131,39 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
               clipRule="evenodd"
             />
           </svg>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-              Editing: {project.title}
-            </h3>
-            <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-              <p>
-                Current status: <span className="font-medium">{project.status || 'concept'}</span>
-              </p>
-              <p>
-                Progress:{' '}
-                <span className="font-medium">{project.progress?.overallProgress || 0}%</span>
-              </p>
-              <p>
-                Last updated:{' '}
-                <span className="font-medium">
+          <div className="ml-3 flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Editing: {project.title}
+              </h3>
+              <StatusBadge status={project.status as any || 'concept'} size="sm" />
+            </div>
+            <div className="mt-3 space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">Overall Progress</span>
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    {project.progress?.overallProgress || 0}%
+                  </span>
+                </div>
+                <ProgressBar
+                  value={project.progress?.overallProgress || 0}
+                  size="sm"
+                  showPercentage={false}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm text-blue-700 dark:text-blue-300">
+                <div>
+                  <span className="font-medium">Current Phase:</span>
+                  <br />
+                  {project.progress?.currentPhase?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Story Development'}
+                </div>
+                <div>
+                  <span className="font-medium">Last Updated:</span>
+                  <br />
                   {new Date(project.updatedAt).toLocaleDateString()}
-                </span>
-              </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -158,6 +176,8 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
             initialData={project as Project}
             onSubmit={handleUpdateProject}
             submitLabel="Update Project"
+            projectId={id}
+            enableCollaboration={true}
           />
         </ProjectFormErrorBoundary>
       </div>

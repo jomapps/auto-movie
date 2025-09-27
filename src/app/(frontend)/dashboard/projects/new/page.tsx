@@ -7,7 +7,7 @@ import { ProjectFormErrorBoundary } from '@/components/ui/ErrorBoundary'
 // import { showToast } from '@/lib/toast'
 
 export default async function NewProjectPage() {
-  const handleCreateProject = async (data: any) => {
+  const handleCreateProject = async (data: any): Promise<string> => {
     'use server'
 
     const formData = new FormData()
@@ -31,10 +31,18 @@ export default async function NewProjectPage() {
       throw new Error(result.error || 'Failed to create project')
     }
 
+    // Return the project ID for collaboration broadcasting
+    const projectId = result.data?.id
+    if (!projectId) {
+      throw new Error('Project created but ID not returned')
+    }
+
     // Redirect to the new project page
     if (result.redirectTo) {
       redirect(result.redirectTo)
     }
+
+    return projectId
   }
 
   return (
