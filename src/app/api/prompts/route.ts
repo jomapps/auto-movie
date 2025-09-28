@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
     const executions = result.docs.map((execution: any) => ({
       id: execution.id,
       templateId: execution.templateId?.id || execution.templateId,
+      templateName: execution.templateId?.name || null,
       template: execution.templateId ? {
         id: execution.templateId.id,
         name: execution.templateId.name,
@@ -70,13 +71,14 @@ export async function GET(request: NextRequest) {
       stage: execution.stage,
       feature: execution.feature,
       projectId: execution.projectId,
-      tagsSnapshot: execution.tagsSnapshot || [],
+      tags: Array.isArray(execution.tagsSnapshot) ? execution.tagsSnapshot.map((t: any) => (typeof t === "string" ? t : t.value)) : [],
       inputs: execution.inputs || {},
       resolvedPrompt: execution.resolvedPrompt,
       model: execution.model,
       status: execution.status,
       outputRaw: execution.outputRaw,
       errorMessage: execution.errorMessage,
+      executionTime: (execution.startedAt && execution.finishedAt) ? (new Date(execution.finishedAt).getTime() - new Date(execution.startedAt).getTime()) : undefined,
       startedAt: execution.startedAt,
       finishedAt: execution.finishedAt,
       notes: execution.notes,

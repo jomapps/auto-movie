@@ -57,7 +57,10 @@ const mockTemplates: PromptTemplate[] = [
 async function TemplatesList({ searchParams }: { searchParams: TemplatesPageProps['searchParams'] }) {
   // In a real implementation, this would query PayloadCMS
   const resolvedSearchParams = await searchParams;
-  const templates = mockTemplates; // Replace with actual filtering logic
+  const query = new URLSearchParams(Object.entries(resolvedSearchParams || {}).filter(([_, v]) => v != null) as [string, string][])
+  const res = await fetch(`/api/prompt-templates?${query.toString()}`, { cache: 'no-store' })
+  const data = await res.json()
+  const templates: PromptTemplate[] = data.templates || []
 
   if (templates.length === 0) {
     return (

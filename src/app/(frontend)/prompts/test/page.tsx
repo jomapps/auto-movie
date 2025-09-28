@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { DynamicForm } from '@/components/prompts/DynamicForm';
 import { PromptTemplate, PromptTestForm } from '@/types/prompts';
 
@@ -27,7 +27,7 @@ export default function TestPage() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get('templateId');
   const initialInputs = searchParams.get('inputs');
-  
+
   const [template, setTemplate] = useState<PromptTemplate | null>(templateId ? mockTemplate : null);
   const [inputs, setInputs] = useState<Record<string, any>>({});
   const [resolvedPrompt, setResolvedPrompt] = useState<string>('');
@@ -36,6 +36,25 @@ export default function TestPage() {
   const [executionResult, setExecutionResult] = useState<any>(null);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
+
+  const router = useRouter();
+
+  // Load template by ID when provided
+  useEffect(() => {
+    if (templateId) {
+      (async () => {
+        try {
+          const res = await fetch(`/api/prompt-templates/${templateId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setTemplate(data);
+          }
+        } catch (e) {
+          console.error('Failed to load template:', e);
+        }
+      })();
+    }
+  }, [templateId]);
 
   useEffect(() => {
     if (initialInputs) {
@@ -56,7 +75,7 @@ export default function TestPage() {
 
   const resolveTemplate = (currentInputs: Record<string, any>) => {
     if (!template) return;
-    
+
     let resolved = template.template;
     Object.entries(currentInputs).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
@@ -115,7 +134,7 @@ export default function TestPage() {
 
   const saveExecution = async () => {
     if (!executionResult) return;
-    
+
     try {
       const response = await fetch('/api/prompts/executions', {
         method: 'POST',
@@ -164,7 +183,7 @@ export default function TestPage() {
         notes: 'Created from test execution',
       };
 
-      const response = await fetch('/api/prompts/templates', {
+      const response = await fetch('/api/prompt-templates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +212,7 @@ export default function TestPage() {
             {template ? `Testing: ${template.name}` : 'Test custom prompts and save results'}
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           {template && (
             <span className="px-3 py-1 text-sm bg-purple-600 text-white rounded">
@@ -241,12 +260,12 @@ export default function TestPage() {
               className="w-full h-64 px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-vertical"
               readOnly={!!template}
             />
-            
+
             <div className="mt-4 flex items-center justify-between">
               <div className="text-sm text-slate-400">
                 {resolvedPrompt.length} characters
               </div>
-              
+
               <button
                 onClick={executePrompt}
                 disabled={isExecuting || !resolvedPrompt.trim()}
@@ -266,14 +285,14 @@ export default function TestPage() {
           {/* Execution Result */}
           <div className="bg-slate-800 rounded-lg p-6">
             <h2 className="text-xl font-semibold text-white mb-4">Result</h2>
-            
+
             {!executionResult && (
               <div className="text-center py-12 text-slate-400">
                 <div className="text-4xl mb-4">🧪</div>
                 <p>Execute a prompt to see results here</p>
               </div>
             )}
-            
+
             {executionResult && (
               <div className="space-y-4">
                 {/* Status & Metrics */}
@@ -292,10 +311,10 @@ export default function TestPage() {
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <button
-                      onClick={saveExecution}
+                      onClick={() => executionResult?.id ? router.push(`/prompts/executions/${executionResult.id}`) : alert('This execution has no ID to view')}
                       className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
                     >
                       Save Execution
@@ -308,7 +327,7 @@ export default function TestPage() {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Output */}
                 <div className="bg-slate-900 rounded p-4">
                   <h3 className="text-sm font-medium text-slate-300 mb-2">Raw Output</h3>
@@ -316,7 +335,7 @@ export default function TestPage() {
                     {executionResult.outputRaw || 'No output available'}
                   </pre>
                 </div>
-                
+
                 {/* Error Message */}
                 {executionResult.errorMessage && (
                   <div className="bg-red-900/20 border border-red-600 rounded p-4">
@@ -335,7 +354,7 @@ export default function TestPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-white mb-4">Save as Template</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -349,7 +368,7 @@ export default function TestPage() {
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={saveAsNewTemplate}

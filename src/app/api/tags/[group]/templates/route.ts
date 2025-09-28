@@ -40,7 +40,7 @@ export async function GET(
           app: template.app,
           stage: template.stage,
           feature: template.feature,
-          tags: template.tags || [],
+          tags: Array.isArray(template.tags) ? template.tags.map((t: any) => typeof t === "string" ? t : t.value) : [],
           relevantTag: relevantTag?.value,
           template: template.template,
           variableDefs: template.variableDefs || [],

@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Route to provider by model and execute using the real execution engine
-      const executionEngine = createExecutionEngine()
+      const executionEngine = createExecutionEngine({ retryAttempts: 1 })
 
       const variableContext: VariableContext = {
         variables: inputs,

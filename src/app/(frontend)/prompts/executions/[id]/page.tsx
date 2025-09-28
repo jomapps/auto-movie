@@ -72,8 +72,8 @@ function getStatusColor(status: string) {
 export default async function ExecutionDetailPage({ params }: ExecutionDetailPageProps) {
   const { id } = await params;
   
-  // In a real implementation, you would fetch the execution using the ID
-  const execution = mockExecution;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/api/prompts/${id}`, { cache: 'no-store' })
+  const execution = res.ok ? await res.json() : null;
 
   if (!execution) {
     return (

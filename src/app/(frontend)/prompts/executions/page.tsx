@@ -106,7 +106,10 @@ function getStatusColor(status: string) {
 async function ExecutionsList({ searchParams }: { searchParams: ExecutionsPageProps['searchParams'] }) {
   // In a real implementation, this would query PayloadCMS
   const resolvedSearchParams = await searchParams;
-  const executions = mockExecutions; // Replace with actual filtering logic
+  const query = new URLSearchParams(Object.entries(resolvedSearchParams || {}).filter(([_, v]) => v != null) as [string, string][])
+  const res = await fetch(`/api/prompts?${query.toString()}`, { cache: 'no-store' })
+  const data = await res.json()
+  const executions: PromptExecution[] = data.executions || []
 
   if (executions.length === 0) {
     return (
