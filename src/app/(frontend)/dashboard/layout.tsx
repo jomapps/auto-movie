@@ -71,14 +71,46 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span>Projects</span>
               </Link>
               
-              <Link 
+              <Link
                 href="/dashboard/media"
                 className="flex items-center space-x-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <span className="text-lg">🎨</span>
                 <span>Media Assets</span>
               </Link>
-              
+
+              {/* Prompt Management Section */}
+              <div className="pt-4 border-t border-slate-800 mt-4">
+                <div className="px-3 py-2 text-slate-400 text-sm font-medium">
+                  Prompt Management
+                </div>
+                <div className="space-y-1">
+                  <Link
+                    href="/prompts/templates"
+                    className="flex items-center space-x-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">📝</span>
+                    <span>Templates</span>
+                  </Link>
+
+                  <Link
+                    href="/prompts/test"
+                    className="flex items-center space-x-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">🧪</span>
+                    <span>Test Prompts</span>
+                  </Link>
+
+                  <Link
+                    href="/prompts/executions"
+                    className="flex items-center space-x-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <span className="text-lg">🚀</span>
+                    <span>Executions</span>
+                  </Link>
+                </div>
+              </div>
+
               <div className="pt-4 border-t border-slate-800 mt-4">
                 <div className="px-3 py-2 text-slate-400 text-sm font-medium">
                   Recent Sessions
