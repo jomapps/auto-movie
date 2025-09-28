@@ -71,6 +71,8 @@ export interface Config {
     media: Media;
     projects: Project;
     sessions: Session;
+    'prompt-templates': PromptTemplate;
+    'prompts-executed': PromptsExecuted;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -81,6 +83,8 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     sessions: SessionsSelect<false> | SessionsSelect<true>;
+    'prompt-templates': PromptTemplatesSelect<false> | PromptTemplatesSelect<true>;
+    'prompts-executed': PromptsExecutedSelect<false> | PromptsExecutedSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -283,6 +287,7 @@ export interface Media {
    */
   version?: number | null;
   status?: ('active' | 'draft' | 'archived' | 'processing' | 'failed') | null;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -444,6 +449,111 @@ export interface Session {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompt-templates".
+ */
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  app: string;
+  feature?: string | null;
+  stage: string;
+  tags?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Template with placeholders like {{variableName}}
+   */
+  template: string;
+  variableDefs: {
+    name: string;
+    type: 'string' | 'number' | 'boolean' | 'json' | 'text' | 'url';
+    required?: boolean | null;
+    description?: string | null;
+    defaultValue?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    id?: string | null;
+  }[];
+  outputSchema?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  model:
+    | 'anthropic/claude-sonnet-4'
+    | 'qwen/qwen3-vl-235b-a22b-thinking'
+    | 'fal-ai/nano-banana'
+    | 'fal-ai/nano-banana/edit';
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Execution records for audit
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts-executed".
+ */
+export interface PromptsExecuted {
+  id: string;
+  templateId?: (string | null) | PromptTemplate;
+  app: string;
+  feature?: string | null;
+  stage: string;
+  projectId?: string | null;
+  tagsSnapshot?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  inputs:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  resolvedPrompt: string;
+  model:
+    | 'anthropic/claude-sonnet-4'
+    | 'qwen/qwen3-vl-235b-a22b-thinking'
+    | 'fal-ai/nano-banana'
+    | 'fal-ai/nano-banana/edit';
+  status: 'success' | 'error';
+  outputRaw?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  errorMessage?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -464,6 +574,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'sessions';
         value: string | Session;
+      } | null)
+    | ({
+        relationTo: 'prompt-templates';
+        value: string | PromptTemplate;
+      } | null)
+    | ({
+        relationTo: 'prompts-executed';
+        value: string | PromptsExecuted;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -578,6 +696,7 @@ export interface MediaSelect<T extends boolean = true> {
       };
   version?: T;
   status?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -658,6 +777,66 @@ export interface SessionsSelect<T extends boolean = true> {
   awaitingUserInput?: T;
   lastChoices?: T;
   sessionState?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompt-templates_select".
+ */
+export interface PromptTemplatesSelect<T extends boolean = true> {
+  name?: T;
+  app?: T;
+  feature?: T;
+  stage?: T;
+  tags?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  template?: T;
+  variableDefs?:
+    | T
+    | {
+        name?: T;
+        type?: T;
+        required?: T;
+        description?: T;
+        defaultValue?: T;
+        id?: T;
+      };
+  outputSchema?: T;
+  model?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts-executed_select".
+ */
+export interface PromptsExecutedSelect<T extends boolean = true> {
+  templateId?: T;
+  app?: T;
+  feature?: T;
+  stage?: T;
+  projectId?: T;
+  tagsSnapshot?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  inputs?: T;
+  resolvedPrompt?: T;
+  model?: T;
+  status?: T;
+  outputRaw?: T;
+  errorMessage?: T;
+  startedAt?: T;
+  finishedAt?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
