@@ -1,19 +1,44 @@
 // storage-adapter-import-placeholder
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
-import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
+
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
-
+import { s3Storage } from '@payloadcms/storage-s3'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Projects } from './collections/Projects'
 import { Sessions } from './collections/Sessions'
+import { PromptTemplates } from './collections/PromptTemplates'
+import { PromptsExecuted } from './collections/PromptsExecuted'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const s3Adapter = s3Storage({
+  config: {
+    endpoint: process.env.R2_ENDPOINT,
+    region: 'auto', // Required for Cloudflare R2
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+    forcePathStyle: true, // Required for R2
+  },
+  bucket: process.env.R2_BUCKET_NAME!,
+  collections: {
+    media: {
+      prefix: 'media', // Optional: organize files in a folder
+      generateFileURL: ({ filename }) => {
+        // Generate the public URL using the custom domain
+        const baseUrl = process.env.R2_PUBLIC_URL || 'https://media.rumbletv.com'
+        return `${baseUrl}/media/${filename}`
+      },
+    },
+  },
+})
 
 export default buildConfig({
   admin: {
@@ -22,9 +47,9 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Projects, Sessions],
+  collections: [Users, Media, Projects, Sessions, PromptTemplates, PromptsExecuted],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: process.env.PAYLOAD_SECRET || 'ae6e18cb408bc7128f23585casdlaelwlekoqdsldsa',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
@@ -33,7 +58,7 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    payloadCloudPlugin(),
+    s3Adapter,
     // storage-adapter-placeholder
   ],
 })

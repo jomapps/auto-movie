@@ -2,7 +2,7 @@ import { buildConfig } from 'payload'
 import path from 'path'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { Users, Projects, Sessions, Media } from './src/collections'
+import { Users, Projects, Sessions, Media, PromptTemplates, PromptsExecuted } from './src/collections'
 
 export default buildConfig({
   admin: {
@@ -16,6 +16,8 @@ export default buildConfig({
     Projects,
     Sessions,
     Media,
+    PromptTemplates,
+    PromptsExecuted,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
