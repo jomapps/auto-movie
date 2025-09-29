@@ -49,8 +49,8 @@ export class TaskServiceClient {
   private apiKey: string
 
   constructor() {
-    this.baseUrl = process.env.TASK_SERVICE_URL || '/api/v1'
-    this.apiKey = process.env.TASK_SERVICE_API_KEY || ''
+    this.baseUrl = process.env.TASK_SERVICE_URL || process.env.NEXT_PUBLIC_TASK_SERVICE_URL || '/api/v1'
+    this.apiKey = (process.env.TASK_SERVICE_API_KEY || process.env.CELERY_TASK_API_KEY || '')
   }
 
   async submitTask(data: TaskSubmissionData): Promise<TaskResponse> {
@@ -59,7 +59,7 @@ export class TaskServiceClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
+          'X-API-Key': this.apiKey,
         },
         body: JSON.stringify(data),
       })
@@ -82,7 +82,7 @@ export class TaskServiceClient {
       const response = await fetch(`${this.baseUrl}/api/v1/tasks/${taskId}/status`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
+          'X-API-Key': this.apiKey,
         },
       })
 
@@ -104,7 +104,7 @@ export class TaskServiceClient {
       const response = await fetch(`${this.baseUrl}/api/v1/tasks/${taskId}/cancel`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
+          'X-API-Key': this.apiKey,
         },
       })
 
@@ -122,7 +122,7 @@ export class TaskServiceClient {
     try {
       const response = await fetch(`${this.baseUrl}/projects/${projectId}/workflow`, {
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
+          'X-API-Key': this.apiKey,
         },
       })
 
@@ -154,7 +154,7 @@ export class TaskServiceClient {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.apiKey}`,
+            'X-API-Key': this.apiKey,
           },
           body: JSON.stringify({
             progress,
