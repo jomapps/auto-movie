@@ -136,7 +136,7 @@ export function ProjectForm({
       progress: {
         currentPhase: (initialData?.progress?.currentPhase as any) || 'story_development',
         overallProgress: initialData?.progress?.overallProgress || 0,
-        completedSteps: initialData?.progress?.completedSteps || [],
+        completedSteps: Array.isArray(initialData?.progress?.completedSteps) ? (initialData.progress.completedSteps as string[]) : [],
       },
       projectSettings: {
         aspectRatio: initialData?.projectSettings?.aspectRatio || '16:9',

@@ -205,7 +205,7 @@ export default function TestBrainPage() {
             <h2 className="text-xl font-semibold mb-4">Test Results</h2>
             <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-4 max-h-64 overflow-y-auto">
               {testResults.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400">Click "Test Connection" to start testing...</p>
+                <p className="text-gray-500 dark:text-gray-400">Click &quot;Test Connection&quot; to start testing...</p>
               ) : (
                 <div className="space-y-1 font-mono text-sm">
                   {testResults.map((result, index) => (

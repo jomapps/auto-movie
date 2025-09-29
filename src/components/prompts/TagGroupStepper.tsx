@@ -353,9 +353,8 @@ export function TagGroupStepper({
               <h4 className="text-md font-semibold text-white mb-4">Template Variables</h4>
               <DynamicForm
                 variableDefs={currentTemplate.variableDefs}
-                values={currentStep.inputs}
-                onChange={updateStepInputs}
-                disabled={currentStep.status === 'completed' || currentStep.status === 'skipped'}
+                initialValues={currentStep.inputs}
+                onInputChange={updateStepInputs}
               />
               
               {/* Notes */}

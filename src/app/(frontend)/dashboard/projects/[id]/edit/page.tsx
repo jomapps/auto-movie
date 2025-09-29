@@ -10,13 +10,13 @@ import { StatusBadge, ProgressBar } from '@/components/ui'
 import type { Project } from '@/payload-types'
 
 interface EditProjectPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditProjectPage({ params }: EditProjectPageProps) {
-  const { id } = params
+  const { id } = await params
   const result = await getProject(id)
 
   if (!result.success || !result.data) {

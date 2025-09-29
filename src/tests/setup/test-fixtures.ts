@@ -17,6 +17,23 @@ import type {
  * Test fixtures for prompt management system testing
  */
 
+// Simple localStorage mock for testing
+const localStorageMock = {
+  store: {} as Record<string, string>,
+  getItem: function(key: string) {
+    return this.store[key] || null;
+  },
+  setItem: function(key: string, value: string) {
+    this.store[key] = value;
+  },
+  removeItem: function(key: string) {
+    delete this.store[key];
+  },
+  clear: function() {
+    this.store = {};
+  }
+};
+
 // Sample Variable Definitions
 export const mockVariableDefinitions: VariableDefinition[] = [
   {
@@ -69,7 +86,7 @@ export const mockVariableDefinitions: VariableDefinition[] = [
   },
   {
     name: 'imageUrl',
-    type: 'url',
+    type: 'string',
     required: false,
     description: 'Reference image URL'
   }
@@ -110,7 +127,8 @@ Develop a rich, engaging concept that sets up the foundation for a complete narr
     model: 'anthropic/claude-sonnet-4',
     notes: 'Foundation template for story development pipeline',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    version: 1
   },
   {
     id: 'story-outline-002',
@@ -133,7 +151,7 @@ Setting: {{setting}}
 
 Ensure the outline supports the themes: {{themes}}`,
     variableDefs: [
-      { name: 'concept', type: 'text', required: true, description: 'Story concept from previous step' },
+      { name: 'concept', type: 'string', required: true, description: 'Story concept from previous step' },
       { name: 'wordCount', type: 'number', required: false, defaultValue: 1000 },
       { name: 'genre', type: 'string', required: true },
       { name: 'setting', type: 'string', required: true },
@@ -147,7 +165,8 @@ Ensure the outline supports the themes: {{themes}}`,
     model: 'anthropic/claude-sonnet-4',
     notes: 'Second step in story development pipeline',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    version: 1
   },
   {
     id: 'character-design-001',
@@ -165,14 +184,15 @@ Visual Style: {{visualStyle}}
 Generate a detailed description suitable for image generation.`,
     variableDefs: [
       { name: 'character', type: 'string', required: true },
-      { name: 'storyContext', type: 'text', required: true },
+      { name: 'storyContext', type: 'string', required: true },
       { name: 'characterRole', type: 'string', required: true },
       { name: 'visualStyle', type: 'string', required: false, defaultValue: 'realistic' }
     ],
     model: 'fal-ai/nano-banana',
     notes: 'Character visual design for image generation',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    version: 1
   },
   {
     id: 'scene-image-001',
@@ -192,7 +212,7 @@ Lighting: {{lighting}}
 Style: {{artStyle}}
 Resolution: {{resolution}}`,
     variableDefs: [
-      { name: 'sceneDescription', type: 'text', required: true },
+      { name: 'sceneDescription', type: 'string', required: true },
       { name: 'characters', type: 'array', required: false, defaultValue: [] },
       { name: 'environment', type: 'string', required: true },
       { name: 'mood', type: 'string', required: false, defaultValue: 'neutral' },
@@ -203,7 +223,8 @@ Resolution: {{resolution}}`,
     model: 'fal-ai/nano-banana',
     notes: 'Scene visualization for storyboard creation',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    version: 1
   }
 ]
 
@@ -281,7 +302,7 @@ export const mockPromptExecutions: PromptExecution[] = [
     stage: 'development',
     feature: 'story-generation',
     projectId: 'project-123',
-    tagsSnapshot: ['preproduction-001', 'story-001'],
+    tags: ['preproduction-001', 'story-001'],
     inputs: {
       character: 'Maya Chen',
       setting: 'Neo-Tokyo 2087',
@@ -293,13 +314,9 @@ export const mockPromptExecutions: PromptExecution[] = [
     },
     resolvedPrompt: 'Create a compelling story concept for a sci-fi story...',
     model: 'anthropic/claude-sonnet-4',
-    status: 'success',
-    outputRaw: mockExecutionResults[0].output,
+    status: 'completed',
+    outputRaw: JSON.stringify(mockExecutionResults[0].output),
     executionTime: 2500,
-    providerUsed: 'openrouter',
-    metrics: mockExecutionResults[0].metrics,
-    startedAt: '2024-01-01T10:00:00.000Z',
-    finishedAt: '2024-01-01T10:00:02.500Z',
     createdAt: '2024-01-01T10:00:03.000Z',
     updatedAt: '2024-01-01T10:00:03.000Z'
   },
@@ -310,7 +327,7 @@ export const mockPromptExecutions: PromptExecution[] = [
     stage: 'development',
     feature: 'character-design',
     projectId: 'project-123',
-    tagsSnapshot: ['character-001', 'visual-001'],
+    tags: ['character-001', 'visual-001'],
     inputs: {
       character: 'Maya Chen',
       storyContext: 'Sci-fi thriller about time manipulation',
@@ -319,13 +336,9 @@ export const mockPromptExecutions: PromptExecution[] = [
     },
     resolvedPrompt: 'Create a visual design prompt for the character: Maya Chen...',
     model: 'fal-ai/nano-banana',
-    status: 'success',
-    outputRaw: mockExecutionResults[1].output,
+    status: 'completed',
+    outputRaw: JSON.stringify(mockExecutionResults[1].output),
     executionTime: 8000,
-    providerUsed: 'fal',
-    metrics: mockExecutionResults[1].metrics,
-    startedAt: '2024-01-01T10:05:00.000Z',
-    finishedAt: '2024-01-01T10:05:08.000Z',
     createdAt: '2024-01-01T10:05:09.000Z',
     updatedAt: '2024-01-01T10:05:09.000Z'
   },
@@ -335,6 +348,7 @@ export const mockPromptExecutions: PromptExecution[] = [
     app: 'auto-movie',
     stage: 'development',
     feature: 'story-generation',
+    tags: ['preproduction-001', 'story-001'],
     inputs: {
       character: 'Invalid Character',
       setting: 'Test Setting'
@@ -342,12 +356,9 @@ export const mockPromptExecutions: PromptExecution[] = [
     },
     resolvedPrompt: 'Create a compelling story concept for a {{genre}} story...',
     model: 'anthropic/claude-sonnet-4',
-    status: 'error',
+    status: 'failed',
     errorMessage: 'Required variable \'genre\' is missing',
     executionTime: 100,
-    providerUsed: 'none',
-    startedAt: '2024-01-01T11:00:00.000Z',
-    finishedAt: '2024-01-01T11:00:00.100Z',
     createdAt: '2024-01-01T11:00:01.000Z',
     updatedAt: '2024-01-01T11:00:01.000Z'
   }
@@ -407,6 +418,52 @@ export const mockTagGroupExecution: TagGroupExecution = {
   notes: 'Movie preproduction workflow execution'
 }
 
+// Variable definitions for VariableContext (different type system)
+const mockVariableDefsForContext = [
+  {
+    name: 'character',
+    type: 'string' as const,
+    required: true,
+    defaultValue: undefined
+  },
+  {
+    name: 'setting',
+    type: 'string' as const,
+    required: true,
+    defaultValue: undefined
+  },
+  {
+    name: 'genre',
+    type: 'string' as const,
+    required: false,
+    defaultValue: 'fantasy'
+  },
+  {
+    name: 'wordCount',
+    type: 'number' as const,
+    required: false,
+    defaultValue: 1000
+  },
+  {
+    name: 'includeDialogue',
+    type: 'boolean' as const,
+    required: false,
+    defaultValue: true
+  },
+  {
+    name: 'themes',
+    type: 'json' as const,
+    required: false,
+    defaultValue: []
+  },
+  {
+    name: 'metadata',
+    type: 'json' as const,
+    required: false,
+    defaultValue: {}
+  }
+]
+
 // Sample Variable Contexts
 export const mockVariableContexts: VariableContext[] = [
   {
@@ -419,7 +476,7 @@ export const mockVariableContexts: VariableContext[] = [
       themes: ['adventure', 'coming-of-age'],
       metadata: { rating: 'G', audience: 'children' }
     },
-    variableDefs: mockVariableDefinitions
+    variableDefs: mockVariableDefsForContext
   },
   {
     variables: {
@@ -427,9 +484,9 @@ export const mockVariableContexts: VariableContext[] = [
       setting: 'Mars Colony Alpha'
     },
     variableDefs: [
-      { name: 'character', type: 'string', required: true },
-      { name: 'setting', type: 'string', required: true },
-      { name: 'year', type: 'number', required: true } // Missing in variables
+      { name: 'character', type: 'string' as const, required: true },
+      { name: 'setting', type: 'string' as const, required: true },
+      { name: 'year', type: 'number' as const, required: true } // Missing in variables
     ]
   },
   {
@@ -541,6 +598,7 @@ export class TestUtils {
       model: 'anthropic/claude-sonnet-4',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      version: 1,
       ...overrides
     }
   }
@@ -661,12 +719,6 @@ export class TestUtils {
           break
         case 'object':
           variables[def.name] = { key: 'value', nested: { prop: 'test' } }
-          break
-        case 'url':
-          variables[def.name] = 'https://example.com/test-image.jpg'
-          break
-        case 'text':
-          variables[def.name] = `This is a longer text value for ${def.name} used in testing scenarios.`
           break
         default:
           variables[def.name] = `${def.name}-value`

@@ -4,18 +4,17 @@ import configPromise from '@/payload.config'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const payload = await getPayload({ config: configPromise })
 
     // Get the execution record with populated template
     const execution = await payload.findByID({
       collection: 'prompts-executed',
-      id: params.id,
-      populate: {
-        templateId: true // Include full template details
-      }
+      id: id,
+      depth: 2 // Include related documents
     })
 
     if (!execution) {
@@ -32,22 +31,24 @@ export async function GET(
       )
     }
 
+    const templateData = typeof execution.templateId === 'object' ? execution.templateId : null;
+
     const response = {
       id: execution.id,
-      templateId: execution.templateId?.id || execution.templateId,
-      templateName: execution.templateId?.name || null,
-      template: execution.templateId ? {
-        id: execution.templateId.id,
-        name: execution.templateId.name,
-        app: execution.templateId.app,
-        stage: execution.templateId.stage,
-        feature: execution.templateId.feature,
-        tags: Array.isArray(execution.templateId.tags) ? execution.templateId.tags.map((t: any) => (typeof t === "string" ? t : t.value)) : [],
-        template: execution.templateId.template,
-        variableDefs: execution.templateId.variableDefs || [],
-        outputSchema: execution.templateId.outputSchema,
-        model: execution.templateId.model,
-        notes: execution.templateId.notes
+      templateId: templateData?.id || execution.templateId,
+      templateName: templateData?.name || null,
+      template: templateData ? {
+        id: templateData.id,
+        name: templateData.name,
+        app: templateData.app,
+        stage: templateData.stage,
+        feature: templateData.feature,
+        tags: Array.isArray(templateData.tags) ? templateData.tags.map((t: any) => (typeof t === "string" ? t : t.value)) : [],
+        template: templateData.template,
+        variableDefs: templateData.variableDefs || [],
+        outputSchema: templateData.outputSchema,
+        model: templateData.model,
+        notes: templateData.notes
       } : null,
       app: execution.app,
       stage: execution.stage,

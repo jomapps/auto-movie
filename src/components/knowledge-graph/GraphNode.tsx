@@ -9,6 +9,7 @@ interface GraphNodeProps {
   showLabel?: boolean;
   onClick?: () => void;
   onDoubleClick?: () => void;
+  style?: React.CSSProperties;
 }
 
 // Color mapping for different node types
@@ -42,7 +43,8 @@ export function GraphNode({
   isSelected = false,
   showLabel = true,
   onClick,
-  onDoubleClick
+  onDoubleClick,
+  style
 }: GraphNodeProps) {
   // Memoize node appearance based on type and properties
   const nodeAppearance = useMemo(() => {
@@ -86,6 +88,7 @@ export function GraphNode({
       transform={`translate(${node.x}, ${node.y})`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
+      style={style}
     >
       {/* Node circle */}
       <circle

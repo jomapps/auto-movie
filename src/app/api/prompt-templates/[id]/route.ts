@@ -4,18 +4,19 @@ import configPromise from '@/payload.config'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url)
     const includeVersions = searchParams.get('includeVersions') === 'true'
+    const { id } = await params
 
     const payload = await getPayload({ config: configPromise })
 
     // Get the template
     const template = await payload.findByID({
       collection: 'prompt-templates',
-      id: params.id
+      id: id
     })
 
     if (!template) {
@@ -37,7 +38,7 @@ export async function GET(
       try {
         const versionsResult = await payload.findVersions({
           collection: 'prompt-templates',
-          where: { parent: { equals: params.id } },
+          where: { parent: { equals: id } },
           sort: '-createdAt',
           limit: 10
         })

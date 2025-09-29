@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { DynamicForm } from '@/components/prompts/DynamicForm';
 import { PromptTemplate, PromptTestForm } from '@/types/prompts';
@@ -23,7 +23,7 @@ const mockTemplate: PromptTemplate = {
   version: 1
 };
 
-export default function TestPage() {
+function TestPageContent() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get('templateId');
   const initialInputs = searchParams.get('inputs');
@@ -388,5 +388,27 @@ export default function TestPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TestPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-slate-800 rounded-lg p-6 animate-pulse">
+            <div className="h-8 bg-slate-700 rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-slate-700 rounded w-2/3 mb-8"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-12 bg-slate-700 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <TestPageContent />
+    </Suspense>
   );
 }

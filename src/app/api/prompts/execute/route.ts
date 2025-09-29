@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
 import type { PromptExecuteRequest, VariableDefinition, ModelType } from '@/types/api'
-import { createExecutionEngine, type VariableContext } from '@/lib/prompts/engine'
+import { createExecutionEngine, VariableInterpolator, type VariableContext } from '@/lib/prompts/engine'
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     let resolvedPrompt = ''
     let templateVariableDefs: VariableDefinition[] = []
     let tagsSnapshot: any[] = []
-    let finalModel: ModelType = model || 'anthropic/claude-sonnet-4'
+    let finalModel: ModelType = (model as ModelType) || 'anthropic/claude-sonnet-4'
 
     const startedAt = new Date()
 
@@ -66,16 +66,43 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        templateVariableDefs = template.variableDefs || []
+        templateVariableDefs = (template.variableDefs || []).map(def => ({
+          ...def,
+          required: Boolean(def.required),
+          description: def.description || undefined,
+          defaultValue: def.defaultValue || undefined
+        }))
         tagsSnapshot = template.tags || []
-        finalModel = model || template.model
+        finalModel = (model || template.model) as ModelType
 
         // Resolve variables in template
-        resolvedPrompt = resolveVariables(template.template, templateVariableDefs, inputs)
+        const interpolator = new VariableInterpolator()
+        const context: VariableContext = {
+          variables: inputs,
+          variableDefs: templateVariableDefs.map(def => ({
+            name: def.name,
+            type: def.type,
+            required: def.required,
+            defaultValue: def.defaultValue
+          }))
+        }
+        const interpolationResult = interpolator.interpolate(template.template, context)
+        resolvedPrompt = interpolationResult.resolvedPrompt
       } else if (inlineTemplate) {
         // Use inline template
         templateVariableDefs = variableDefs || []
-        resolvedPrompt = resolveVariables(inlineTemplate, templateVariableDefs, inputs)
+        const interpolator = new VariableInterpolator()
+        const context: VariableContext = {
+          variables: inputs,
+          variableDefs: templateVariableDefs.map(def => ({
+            name: def.name,
+            type: def.type,
+            required: def.required,
+            defaultValue: def.defaultValue
+          }))
+        }
+        const interpolationResult = interpolator.interpolate(inlineTemplate, context)
+        resolvedPrompt = interpolationResult.resolvedPrompt
       } else {
         return NextResponse.json(
           { error: 'Either templateId or inlineTemplate must be provided' },

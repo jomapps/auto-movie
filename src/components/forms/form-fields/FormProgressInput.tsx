@@ -4,7 +4,7 @@ import React, { forwardRef, useState, useCallback } from 'react'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { cn } from '@/utils/cn'
 
-interface FormProgressInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'min' | 'max'> {
+interface FormProgressInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'min' | 'max' | 'size'> {
   error?: boolean
   showSlider?: boolean
   showNumberInput?: boolean

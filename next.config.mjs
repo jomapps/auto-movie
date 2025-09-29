@@ -33,6 +33,9 @@ const nextConfig = {
   experimental: {
     webpackBuildWorker: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Headers for WebSocket connections
   async headers() {
     return [

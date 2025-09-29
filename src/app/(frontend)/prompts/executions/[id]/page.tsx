@@ -83,7 +83,7 @@ export default async function ExecutionDetailPage({ params }: ExecutionDetailPag
             Execution Not Found
           </h3>
           <p className="text-red-700 dark:text-red-300">
-            The execution with ID "{id}" could not be found.
+            The execution with ID &quot;{id}&quot; could not be found.
           </p>
           <Link
             href="/prompts/executions"
@@ -217,7 +217,7 @@ export default async function ExecutionDetailPage({ params }: ExecutionDetailPag
           <h2 className="text-xl font-semibold text-white mb-4">Tags</h2>
           {execution.tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {execution.tags.map((tag, index) => (
+              {execution.tags.map((tag: string, index: number) => (
                 <span key={index} className="px-3 py-1 text-sm bg-slate-700 text-slate-300 rounded">
                   {tag}
                 </span>
@@ -274,7 +274,7 @@ export default async function ExecutionDetailPage({ params }: ExecutionDetailPag
                 <label className="block text-sm font-medium text-slate-300 mb-2">{key}</label>
                 <div className="bg-slate-900 rounded p-3">
                   <pre className="text-sm text-slate-300 whitespace-pre-wrap">
-                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
                   </pre>
                 </div>
               </div>

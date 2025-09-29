@@ -36,7 +36,7 @@ export class OpenRouterProvider implements ProviderAdapter {
 
   async execute(prompt: string, model: string, config?: any): Promise<ExecutionResult> {
     const startTime = Date.now()
-    let retryCount = 0
+    const retryCount = 0
 
     if (!this.validateConfig()) {
       return {

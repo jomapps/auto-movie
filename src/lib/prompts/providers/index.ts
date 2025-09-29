@@ -3,9 +3,9 @@ import type {
   ExecutionResult,
   ExecutionConfig,
   ModelType,
-  MODEL_TO_PROVIDER_MAP,
   ExecutionLogger
 } from '../types'
+import { MODEL_TO_PROVIDER_MAP } from '../types'
 import { OpenRouterProvider } from './openrouter'
 import { FalProvider } from './fal'
 

@@ -50,9 +50,7 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       sort: ['-createdAt'],
-      populate: {
-        templateId: true // Include template details
-      }
+      depth: 2 // Include related documents
     })
 
     // Transform the data for the response

@@ -78,7 +78,10 @@ export function useKnowledgeGraph(query?: string) {
     properties?: Record<string, any>;
   }) => {
     try {
-      const nodeId = await brainClient.addKnowledgeGraphNode(node);
+      const nodeId = await brainClient.addKnowledgeGraphNode({
+        ...node,
+        properties: node.properties || {}
+      });
       // Reload graph to show new node
       await loadGraph(query);
       return nodeId;
@@ -96,7 +99,12 @@ export function useKnowledgeGraph(query?: string) {
     properties?: Record<string, any>;
   }) => {
     try {
-      const edgeId = await brainClient.addKnowledgeGraphEdge(edge);
+      // Ensure properties is always defined for the API call
+      const edgeWithProperties = {
+        ...edge,
+        properties: edge.properties || {}
+      };
+      const edgeId = await brainClient.addKnowledgeGraphEdge(edgeWithProperties);
       // Reload graph to show new edge
       await loadGraph(query);
       return edgeId;

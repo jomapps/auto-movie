@@ -4,12 +4,13 @@ import configPromise from '@/payload.config'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { group: string } }
+  { params }: { params: Promise<{ group: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
+    const { group } = await params
 
     const payload = await getPayload({ config: configPromise })
 
@@ -18,7 +19,7 @@ export async function GET(
       collection: 'prompt-templates',
       where: {
         'tags.value': {
-          like: `${params.group}%`
+          like: `${group}%`
         }
       },
       page,
@@ -31,7 +32,7 @@ export async function GET(
       .map((template: any) => {
         // Find the relevant tag for this group
         const relevantTag = template.tags?.find((tag: any) =>
-          tag.value?.startsWith(params.group)
+          tag.value?.startsWith(group)
         )
 
         return {
@@ -66,7 +67,7 @@ export async function GET(
 
     return NextResponse.json({
       templates,
-      group: params.group,
+      group: group,
       pagination: {
         page: result.page,
         limit: result.limit,

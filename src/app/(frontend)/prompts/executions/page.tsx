@@ -318,7 +318,17 @@ export default async function ExecutionsPage({ searchParams }: ExecutionsPagePro
       </div>
 
       {/* Filters */}
-      <PromptFilters showExecutionFilters={true} />
+      <Suspense fallback={
+        <div className="bg-slate-800 rounded-lg p-6 animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-10 bg-slate-700 rounded"></div>
+            ))}
+          </div>
+        </div>
+      }>
+        <PromptFilters showExecutionFilters={true} />
+      </Suspense>
 
       {/* Executions List */}
       <Suspense fallback={
