@@ -191,10 +191,10 @@ export class PayloadIntegrationService {
     try {
       const payload = await getPayload({ config })
 
-      const project = await payload.findByID({
+      const project = (await payload.findByID({
         collection: 'projects',
         id: projectId,
-      })
+      })) as any
 
       if (!project) {
         throw new Error('Project not found')

@@ -183,22 +183,37 @@ export class ProductionSync {
       try {
         const status = await this.celeryBridge.getTaskStatus(taskId)
 
+        if (!status) {
+          continue
+        }
+
+        const taskDetails = status as any
+        const normalizedStatusValue = String(status.status).toLowerCase()
+        const progressValue =
+          typeof taskDetails.progress === 'number'
+            ? taskDetails.progress
+            : typeof taskDetails.metadata?.progress === 'number'
+              ? taskDetails.metadata.progress
+              : undefined
+        const progressMessage =
+          taskDetails.progressMessage || taskDetails.metadata?.progressMessage || undefined
+
         const update: ProductionUpdate = {
           type: 'task_update',
           source: 'celery',
           entityId: taskId,
           entityType: 'task',
-          status: status.status,
-          progress: status.progress,
-          message: status.progressMessage,
-          data: status.result,
+          status: normalizedStatusValue,
+          progress: progressValue,
+          message: progressMessage,
+          data: status.metadata || taskDetails.result,
           timestamp: new Date().toISOString(),
         }
 
         updates.push(update)
 
         // Remove completed/failed tasks from tracking
-        if (status.status === 'SUCCESS' || status.status === 'FAILURE') {
+        if (['success', 'completed', 'failure', 'failed'].includes(normalizedStatusValue)) {
           this.untrackTask(sessionId, taskId)
 
           // Create completion notification
@@ -206,12 +221,14 @@ export class ProductionSync {
             id: `task_${taskId}_${Date.now()}`,
             sessionId,
             projectId: subscription.projectId,
-            type: status.status === 'SUCCESS' ? 'success' : 'error',
-            title: status.status === 'SUCCESS' ? 'Task Completed' : 'Task Failed',
+            type: ['success', 'completed'].includes(normalizedStatusValue) ? 'success' : 'error',
+            title: ['success', 'completed'].includes(normalizedStatusValue)
+              ? 'Task Completed'
+              : 'Task Failed',
             message:
-              status.status === 'SUCCESS'
+              ['success', 'completed'].includes(normalizedStatusValue)
                 ? 'Production task completed successfully'
-                : status.error || 'Task failed',
+                : taskDetails.error?.message || taskDetails.error || taskDetails.metadata?.error || 'Task failed',
             createdAt: new Date().toISOString(),
           })
         }
@@ -345,7 +362,9 @@ export class ProductionSync {
     for (const taskId of taskIds) {
       try {
         const status = await this.celeryBridge.getTaskStatus(taskId)
-        statuses.push(status)
+        if (status) {
+          statuses.push(status as any)
+        }
       } catch (error) {
         console.error(`Failed to get status for task ${taskId}:`, error)
       }

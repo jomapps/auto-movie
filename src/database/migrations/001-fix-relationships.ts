@@ -8,8 +8,18 @@
  * @author Database Architect Worker
  */
 
-import { getPayload } from '@/utils/getPayload'
-import { ObjectId } from 'mongodb'
+import { getPayloadInstance } from '@/utils/getPayload'
+
+let MongoObjectId: any = null
+
+async function loadObjectId() {
+  if (!MongoObjectId) {
+    // @ts-ignore - mongodb is provided by the Payload runtime
+    const mongodb = await import('mongodb')
+    MongoObjectId = (mongodb as any).ObjectId
+  }
+  return MongoObjectId
+}
 
 interface MigrationResult {
   success: boolean
@@ -27,7 +37,8 @@ export async function migrateProjectRelationships(): Promise<MigrationResult> {
   }
 
   try {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
+    const ObjectId = await loadObjectId()
     const db = payload.db
 
     // Phase 1: Fix Media Collection
@@ -59,7 +70,8 @@ export async function migrateProjectRelationships(): Promise<MigrationResult> {
           result.errors.push(`Media ${media._id}: Project ${media.project} not found`)
         }
       } catch (error) {
-        result.errors.push(`Media ${media._id}: ${error.message}`)
+        const message = error instanceof Error ? error.message : String(error)
+        result.errors.push(`Media ${media._id}: ${message}`)
       }
     }
 
@@ -94,7 +106,8 @@ export async function migrateProjectRelationships(): Promise<MigrationResult> {
           result.errors.push(`Session ${session._id}: Project ${session.project} not found`)
         }
       } catch (error) {
-        result.errors.push(`Session ${session._id}: ${error.message}`)
+        const message = error instanceof Error ? error.message : String(error)
+        result.errors.push(`Session ${session._id}: ${message}`)
       }
     }
 
@@ -142,7 +155,8 @@ export async function migrateProjectRelationships(): Promise<MigrationResult> {
 
     return result
   } catch (error) {
-    result.errors.push(`Fatal error: ${error.message}`)
+    const message = error instanceof Error ? error.message : String(error)
+    result.errors.push(`Fatal error: ${message}`)
     result.success = false
     console.error('Migration failed:', error)
     return result
@@ -154,7 +168,8 @@ export async function rollbackProjectRelationships(): Promise<void> {
   console.log('WARNING: Rollback is not recommended as it converts ObjectId back to strings')
   console.log('This should only be used in emergency situations')
 
-  const payload = await getPayload()
+  const payload = await getPayloadInstance()
+  const ObjectId = await loadObjectId()
   const db = payload.db
 
   // Rollback Media

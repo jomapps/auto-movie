@@ -59,7 +59,7 @@ export class OpenRouterLLMService {
       const systemPrompt = this.buildSystemPrompt(context)
 
       // Format conversation for OpenRouter
-      const formattedMessages = [
+      const formattedMessages: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
         ...messages,
       ]

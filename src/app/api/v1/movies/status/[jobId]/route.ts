@@ -37,11 +37,11 @@ async function handleGetStatus(request: NextRequest, user: any, context: RoutePa
 
     const payload = await getPayload({ config })
 
-    // Find session by jobId in metadata
+    // Find session by jobId in contextData
     const sessions = await payload.find({
       collection: 'sessions',
       where: {
-        'metadata.jobId': { equals: jobId },
+        'contextData.jobId': { equals: jobId },
       },
       limit: 1,
       depth: 2,
@@ -76,14 +76,16 @@ async function handleGetStatus(request: NextRequest, user: any, context: RoutePa
     }
 
     // Extract job metadata
-    const metadata = session.metadata as any
+    const metadata = session.contextData as any
     const status = metadata?.status || 'unknown'
     const progress = metadata?.progress || 0
     const error = metadata?.error
     const result = metadata?.result
 
     // Fetch associated project
-    const projectId = typeof session.project === 'string' ? session.project : session.project?.id
+    const projectField = session.project as any
+    const projectId =
+      typeof projectField === 'string' ? projectField : projectField?.id
     let project = null
     if (projectId) {
       try {

@@ -38,7 +38,7 @@ async function handleListMovies(request: NextRequest, user: any) {
 
     // Filter by status if specified
     if (status) {
-      where['metadata.status'] = { equals: status }
+      where['contextData.status'] = { equals: status }
     }
 
     // Query sessions (movie generation jobs)
@@ -53,7 +53,7 @@ async function handleListMovies(request: NextRequest, user: any) {
 
     // Format response
     const movies = result.docs.map((session) => {
-      const metadata = session.metadata as any
+      const metadata = session.contextData as any
       const project =
         typeof session.project === 'object' ? session.project : { id: session.project }
 

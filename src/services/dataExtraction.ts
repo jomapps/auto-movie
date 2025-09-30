@@ -182,6 +182,7 @@ export class DataExtractionService {
     context: {
       projectId: string
       genre?: string
+      messageId?: string
       conversationHistory?: LLMMessage[]
       existingEntities?: {
         characters?: string[]
@@ -206,7 +207,13 @@ export class DataExtractionService {
       projectContext: {
         projectId: context.projectId,
         genre: context.genre,
-        existingEntities: context.existingEntities,
+        existingEntities: context.existingEntities
+          ? {
+              characters: context.existingEntities.characters || [],
+              scenes: context.existingEntities.scenes || [],
+              episodes: context.existingEntities.episodes || [],
+            }
+          : undefined,
       },
       extractionTarget: ['character', 'scene', 'episode'],
       responseFormat: 'json_object',
@@ -434,11 +441,12 @@ Extract characters, scenes, and episodes mentioned. Return structured JSON follo
     sessionId: string,
     entities: ExtractedEntity[]
   ): Promise<void> {
-    const state = this.extractionStates.get(sessionId) || {
+    const existingState = this.extractionStates.get(sessionId)
+    const state: ExtractionState = existingState || {
       sessionId,
       projectId: entities[0]?.conversationContext.projectId || '',
-      pendingEntities: new Map(),
-      completedEntities: [],
+      pendingEntities: new Map<string, Partial<ExtractedEntity>>(),
+      completedEntities: [] as ExtractedEntity[],
       awaitingClarification: false,
       clarificationQuestions: [],
     }

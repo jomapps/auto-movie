@@ -56,45 +56,315 @@ interface TransitionResult {
 // Mock WorkflowEngine - will be implemented in Phase 0
 class WorkflowEngine {
   private steps: Map<WorkflowStep, StepDefinition> = new Map()
+  private stepOrder: WorkflowStep[] = []
 
   constructor() {
     this.initializeWorkflow()
   }
 
   private initializeWorkflow(): void {
-    throw new Error('Not implemented')
+    const definitions: StepDefinition[] = [
+      {
+        id: 'initial_concept',
+        name: 'Initial Concept',
+        prerequisites: [],
+        description: 'Define the initial idea and project goals.',
+        estimatedDuration: 1,
+      },
+      {
+        id: 'story_structure',
+        name: 'Story Structure',
+        prerequisites: ['initial_concept'],
+        description: 'Develop the narrative framework and plot beats.',
+        estimatedDuration: 2,
+      },
+      {
+        id: 'character_development',
+        name: 'Character Development',
+        prerequisites: ['initial_concept'],
+        description: 'Define characters, motivations, and relationships.',
+        estimatedDuration: 2,
+      },
+      {
+        id: 'storyboard',
+        name: 'Storyboard',
+        prerequisites: ['story_structure', 'character_development'],
+        description: 'Visualize key scenes and shot progression.',
+        estimatedDuration: 3,
+      },
+      {
+        id: 'asset_creation',
+        name: 'Asset Creation',
+        prerequisites: ['storyboard', 'character_development'],
+        description: 'Produce visual and audio assets needed for production.',
+        estimatedDuration: 4,
+      },
+      {
+        id: 'production',
+        name: 'Production',
+        prerequisites: ['storyboard', 'asset_creation', 'character_development'],
+        description: 'Assemble scenes using completed assets.',
+        estimatedDuration: 5,
+      },
+      {
+        id: 'editing',
+        name: 'Editing',
+        prerequisites: ['production', 'asset_creation', 'storyboard', 'story_structure'],
+        description: 'Refine pacing, timing, and continuity.',
+        estimatedDuration: 3,
+      },
+      {
+        id: 'review',
+        name: 'Review',
+        prerequisites: ['editing', 'production'],
+        description: 'Perform quality checks and gather feedback.',
+        estimatedDuration: 2,
+      },
+      {
+        id: 'final',
+        name: 'Final Delivery',
+        prerequisites: ['review', 'editing'],
+        description: 'Release the completed production.',
+        estimatedDuration: 1,
+      },
+    ]
+
+    this.steps = new Map(definitions.map((definition) => [definition.id, definition]))
+    this.stepOrder = definitions.map((definition) => definition.id)
   }
 
   canTransitionTo(currentStep: WorkflowStep, targetStep: WorkflowStep, completedSteps: WorkflowStep[]): boolean {
-    throw new Error('Not implemented')
+    if (!this.steps.has(targetStep)) {
+      return false
+    }
+
+    if (currentStep === targetStep) {
+      return true
+    }
+
+    const completedSet = new Set(this.dedupeSteps(completedSteps))
+
+    const { isValid } = this.validatePrerequisites(targetStep, Array.from(completedSet))
+    if (!isValid) {
+      return false
+    }
+
+    const targetIndex = this.stepOrder.indexOf(targetStep)
+    const currentIndex = this.stepOrder.indexOf(currentStep)
+
+    if (targetIndex < 0) {
+      return false
+    }
+
+    if (targetIndex < currentIndex && !completedSet.has(targetStep)) {
+      return false
+    }
+
+    return true
   }
 
   transitionTo(state: WorkflowState, targetStep: WorkflowStep): TransitionResult {
-    throw new Error('Not implemented')
+    if (!this.steps.has(targetStep)) {
+      return {
+        success: false,
+        error: `${this.formatStepName(targetStep)} is not a valid workflow step.`,
+        suggestions: this.getAvailableSuggestions(state.currentStep, state.completedSteps),
+      }
+    }
+
+    if (!state.completedSteps.includes(state.currentStep)) {
+      return {
+        success: false,
+        error: `Cannot leave "${state.currentStep}" until it is marked complete.`,
+        suggestions: [this.formatStepName(state.currentStep)],
+      }
+    }
+
+    const completedForValidation = this.dedupeSteps(state.completedSteps)
+    const prereqValidation = this.validatePrerequisites(targetStep, completedForValidation)
+
+    if (!prereqValidation.isValid) {
+      return {
+        success: false,
+        error: this.generateHelpfulError(targetStep, prereqValidation.missing),
+        suggestions: prereqValidation.missing.map((step) => this.formatStepName(step)),
+      }
+    }
+
+    if (!this.canTransitionTo(state.currentStep, targetStep, state.completedSteps)) {
+      const missing = this.validatePrerequisites(targetStep, completedForValidation).missing
+
+      return {
+        success: false,
+        error: this.generateHelpfulError(targetStep, missing),
+        suggestions: missing.map((step) => this.formatStepName(step)),
+      }
+    }
+
+    const updatedCompleted = this.dedupeSteps([...completedForValidation, targetStep])
+    const availableSteps = this.getAvailableSteps(targetStep, updatedCompleted)
+    const blockedSteps = this.computeBlockedSteps(updatedCompleted, availableSteps)
+
+    const newState: WorkflowState = {
+      currentStep: targetStep,
+      completedSteps: updatedCompleted,
+      availableSteps,
+      progress: this.calculateProgress(updatedCompleted),
+      blockedSteps,
+    }
+
+    return {
+      success: true,
+      newState,
+    }
   }
 
   getAvailableSteps(currentStep: WorkflowStep, completedSteps: WorkflowStep[]): WorkflowStep[] {
-    throw new Error('Not implemented')
+    if (!this.steps.has(currentStep)) {
+      return []
+    }
+
+    const completedSet = new Set(this.dedupeSteps(completedSteps))
+    const effectiveCompleted = new Set(completedSet)
+    if (completedSet.has(currentStep)) {
+      effectiveCompleted.add(currentStep)
+    }
+
+    const available = new Set<WorkflowStep>()
+    completedSet.forEach((step) => available.add(step))
+
+    for (const step of this.stepOrder) {
+      if (step === currentStep) {
+        continue
+      }
+
+      const definition = this.steps.get(step)
+      if (!definition) {
+        continue
+      }
+
+      const missing = definition.prerequisites.filter((prereq) => !effectiveCompleted.has(prereq))
+      if (missing.length === 0) {
+        available.add(step)
+      }
+    }
+
+    return this.stepOrder.filter((step) => available.has(step))
   }
 
   validatePrerequisites(targetStep: WorkflowStep, completedSteps: WorkflowStep[]): { isValid: boolean; missing: WorkflowStep[] } {
-    throw new Error('Not implemented')
+    const definition = this.steps.get(targetStep)
+
+    if (!definition) {
+      return {
+        isValid: false,
+        missing: [],
+      }
+    }
+
+    const completedSet = new Set(this.dedupeSteps(completedSteps))
+    const missing = definition.prerequisites.filter((step) => !completedSet.has(step))
+
+    return {
+      isValid: missing.length === 0,
+      missing,
+    }
   }
 
   calculateProgress(completedSteps: WorkflowStep[]): number {
-    throw new Error('Not implemented')
+    const uniqueCompleted = this.dedupeSteps(completedSteps)
+    if (uniqueCompleted.length === 0) {
+      return 0
+    }
+
+    const progress = (uniqueCompleted.length / this.stepOrder.length) * 100
+    return Math.round(progress)
   }
 
   getStepInfo(step: WorkflowStep): StepDefinition | undefined {
-    throw new Error('Not implemented')
+    return this.steps.get(step)
   }
 
   generateHelpfulError(targetStep: WorkflowStep, missingPrereqs: WorkflowStep[]): string {
-    throw new Error('Not implemented')
+    const formattedTarget = this.formatStepName(targetStep)
+
+    if (!this.steps.has(targetStep)) {
+      return `${formattedTarget} (${targetStep}) is not part of the workflow.`
+    }
+
+    if (missingPrereqs.length === 0) {
+      return `${formattedTarget} (${targetStep}) cannot be started until earlier steps are complete.`
+    }
+
+    if (missingPrereqs.length === 1) {
+      const missing = missingPrereqs[0]
+      return `${formattedTarget} (${targetStep}) requires ${this.formatStepName(missing)} ("${missing}") to be completed first.`
+    }
+
+    const prereqList = missingPrereqs
+      .map((step) => `${this.formatStepName(step)} ("${step}")`)
+      .join(', ')
+    return `${formattedTarget} (${targetStep}) requires the following steps to be completed first: ${prereqList}.`
   }
 
   getNextRecommendedStep(state: WorkflowState): WorkflowStep | null {
-    throw new Error('Not implemented')
+    const available = this.getAvailableSteps(state.currentStep, state.completedSteps)
+    const completedSet = new Set(state.completedSteps)
+    const candidates = available.filter((step) => !completedSet.has(step))
+
+    if (candidates.length === 0) {
+      return null
+    }
+
+    return candidates.sort((a, b) => this.stepOrder.indexOf(a) - this.stepOrder.indexOf(b))[0] || null
+  }
+
+  private dedupeSteps(steps: WorkflowStep[]): WorkflowStep[] {
+    const seen = new Set<WorkflowStep>()
+    const orderedSteps: WorkflowStep[] = []
+
+    for (const step of steps) {
+      if (!seen.has(step)) {
+        seen.add(step)
+        orderedSteps.push(step)
+      }
+    }
+
+    return orderedSteps
+  }
+
+  private formatStepName(step: string): string {
+    return step
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  }
+
+  private computeBlockedSteps(completedSteps: WorkflowStep[], availableSteps: WorkflowStep[]): WorkflowState['blockedSteps'] {
+    const completedSet = new Set(completedSteps)
+    const availableSet = new Set(availableSteps)
+    const blocked: WorkflowState['blockedSteps'] = []
+
+    for (const step of this.stepOrder) {
+      if (availableSet.has(step) || completedSet.has(step)) {
+        continue
+      }
+
+      const validation = this.validatePrerequisites(step, completedSteps)
+      if (!validation.isValid && validation.missing.length > 0) {
+        blocked.push({
+          step,
+          reason: this.generateHelpfulError(step, validation.missing),
+        })
+      }
+    }
+
+    return blocked
+  }
+
+  private getAvailableSuggestions(currentStep: WorkflowStep, completedSteps: WorkflowStep[]): string[] {
+    const available = this.getAvailableSteps(currentStep, completedSteps)
+    return available.map((step) => this.formatStepName(step))
   }
 }
 

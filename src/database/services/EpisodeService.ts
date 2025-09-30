@@ -1,4 +1,4 @@
-import { getPayload } from '@/utils/getPayload'
+import { getPayloadInstance } from '@/utils/getPayload'
 import type { Episode } from '@/payload-types'
 
 export interface CreateEpisodeDTO {
@@ -22,7 +22,7 @@ export class EpisodeService {
    * Create a new episode
    */
   static async create(data: CreateEpisodeDTO): Promise<Episode> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     // Check for duplicate episode number in project
     const existing = await this.findByProjectAndNumber(data.project, data.episodeNumber)
@@ -42,7 +42,7 @@ export class EpisodeService {
    * Find episode by ID
    */
   static async findById(id: string): Promise<Episode | null> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     try {
       const episode = await payload.findByID({
@@ -62,7 +62,7 @@ export class EpisodeService {
     projectId: string,
     episodeNumber: number,
   ): Promise<Episode | null> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const result = await payload.find({
       collection: 'episodes',
@@ -79,7 +79,7 @@ export class EpisodeService {
    * Get all episodes for a project
    */
   static async findByProject(projectId: string): Promise<Episode[]> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const result = await payload.find({
       collection: 'episodes',
@@ -97,7 +97,7 @@ export class EpisodeService {
    * Update episode
    */
   static async update(id: string, data: UpdateEpisodeDTO): Promise<Episode> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const episode = await payload.update({
       collection: 'episodes',
@@ -112,7 +112,7 @@ export class EpisodeService {
    * Delete episode
    */
   static async delete(id: string): Promise<boolean> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     try {
       await payload.delete({
@@ -129,7 +129,7 @@ export class EpisodeService {
    * Update episode script
    */
   static async updateScript(id: string, scriptData: Partial<Episode['script']>): Promise<void> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const episode = await this.findById(id)
     if (!episode) {
@@ -155,7 +155,7 @@ export class EpisodeService {
     id: string,
     productionData: Partial<Episode['production']>,
   ): Promise<void> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const episode = await this.findById(id)
     if (!episode) {

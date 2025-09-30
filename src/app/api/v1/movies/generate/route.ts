@@ -127,6 +127,7 @@ async function handleGenerate(request: NextRequest, user: any) {
       data: {
         user: user.id,
         project: data.projectId,
+        currentStep: 'initial_concept',
         contextData: {
           jobId,
           status: 'queued',
@@ -141,9 +142,9 @@ async function handleGenerate(request: NextRequest, user: any) {
       collection: 'projects',
       id: data.projectId,
       data: {
-        status: 'generation',
+        status: 'production',
         progress: {
-          currentPhase: 'generation',
+          currentPhase: 'scene_production',
           overallProgress: 0,
         },
       },

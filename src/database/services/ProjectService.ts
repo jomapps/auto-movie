@@ -1,4 +1,4 @@
-import { getPayload } from '@/utils/getPayload'
+import { getPayloadInstance } from '@/utils/getPayload'
 import type { Project } from '@/payload-types'
 
 export interface CreateProjectDTO {
@@ -33,7 +33,7 @@ export class ProjectService {
    * Create a new project
    */
   static async create(data: CreateProjectDTO): Promise<Project> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const project = await payload.create({
       collection: 'projects',
@@ -47,7 +47,7 @@ export class ProjectService {
    * Find project by ID
    */
   static async findById(id: string): Promise<Project | null> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     try {
       const project = await payload.findByID({
@@ -64,7 +64,7 @@ export class ProjectService {
    * Find projects by user with optional filters
    */
   static async findByUser(userId: string, filters?: ProjectFilters): Promise<Project[]> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const where: any = {
       or: [{ createdBy: { equals: userId } }, { collaborators: { contains: userId } }],
@@ -91,7 +91,7 @@ export class ProjectService {
    * Update project
    */
   static async update(id: string, data: UpdateProjectDTO): Promise<Project> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const project = await payload.update({
       collection: 'projects',
@@ -106,7 +106,7 @@ export class ProjectService {
    * Delete project
    */
   static async delete(id: string): Promise<boolean> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     try {
       await payload.delete({
@@ -123,7 +123,7 @@ export class ProjectService {
    * Add collaborator to project
    */
   static async addCollaborator(projectId: string, userId: string): Promise<void> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const project = await this.findById(projectId)
     if (!project) {
@@ -151,7 +151,7 @@ export class ProjectService {
    * Remove collaborator from project
    */
   static async removeCollaborator(projectId: string, userId: string): Promise<void> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const project = await this.findById(projectId)
     if (!project) {
@@ -180,7 +180,7 @@ export class ProjectService {
     projectId: string,
     progress: Partial<Project['progress']>,
   ): Promise<void> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const project = await this.findById(projectId)
     if (!project) {
@@ -203,7 +203,7 @@ export class ProjectService {
    * Search projects by title
    */
   static async search(query: string, userId?: string): Promise<Project[]> {
-    const payload = await getPayload()
+    const payload = await getPayloadInstance()
 
     const where: any = {
       title: {

@@ -299,7 +299,7 @@ export class PayloadIntegrationService {
     // Create in PayloadCMS
     const created = await this.payload.create({
       collection: 'scenes',
-      data: mapped,
+      data: mapped as any,
     })
 
     result.created?.push({
