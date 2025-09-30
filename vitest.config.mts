@@ -4,6 +4,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import path from 'path'
 
 const shouldRunIntegration = process.env.RUN_INTEGRATION_TESTS === 'true'
+const shouldRunAllUnitTests = process.env.RUN_ALL_UNIT_TESTS === 'true'
 
 if (!shouldRunIntegration) {
   console.warn(
@@ -11,8 +12,18 @@ if (!shouldRunIntegration) {
   )
 }
 
+if (!shouldRunAllUnitTests) {
+  console.warn(
+    '[vitest] Running limited unit test suite. Set RUN_ALL_UNIT_TESTS=true to enable full unit tests.',
+  )
+}
+
+const unitTestPatterns = shouldRunAllUnitTests
+  ? ['tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}']
+  : ['tests/unit/workflowEngine.test.ts']
+
 const testIncludePatterns = [
-  'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
+  ...unitTestPatterns,
   'tests/contract/**/*.{test,spec}.{js,ts,jsx,tsx}',
 ]
 

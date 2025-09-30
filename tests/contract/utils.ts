@@ -12,7 +12,9 @@ if (!CONTRACT_API_BASE_URL) {
   )
 }
 
-export const describeContract: typeof describe = CONTRACT_API_BASE_URL ? describe : describe.skip
+export const describeContract = (
+  CONTRACT_API_BASE_URL ? describe : describe.skip
+) as typeof describe
 
 export function getContractBaseUrl(): string {
   if (!CONTRACT_API_BASE_URL) {
