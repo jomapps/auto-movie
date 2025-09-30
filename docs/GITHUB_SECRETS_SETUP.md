@@ -18,24 +18,55 @@ When prompted for passphrase, press Enter (no passphrase for CI/CD).
 
 ### 2. Add Public Key to Server
 
+**Important:** First, fix the host key issue:
+
+```bash
+# Remove old host key (if you see "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED")
+ssh-keygen -R 85.208.51.186
+ssh-keygen -R vmd177401
+
+# Accept new host key
+ssh-keyscan -H 85.208.51.186 >> ~/.ssh/known_hosts
+```
+
 Copy the public key to the server:
 
 ```bash
 # Option 1: Using ssh-copy-id (easiest)
-ssh-copy-id -i ~/.ssh/github_deploy_auto_movie.pub root@vmd177401
+ssh-copy-id -i ~/.ssh/github_deploy_auto_movie.pub root@85.208.51.186
 
-# Option 2: Manual copy
+# Option 2: Manual copy (if ssh-copy-id doesn't work)
 cat ~/.ssh/github_deploy_auto_movie.pub
 # Copy the output and paste it to the server
-ssh root@vmd177401
-echo "PASTE_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+ssh root@85.208.51.186
+echo "PASTE_YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
 ```
 
 Test the connection:
 
 ```bash
-ssh -i ~/.ssh/github_deploy_auto_movie root@vmd177401
+# Test with new key
+ssh -i ~/.ssh/github_deploy_auto_movie root@85.208.51.186
 # Should connect without password
+```
+
+got result:
+```
+leoge@Rampyari MINGW64 /d/Projects/movie-generation-platform/apps/auto-movie (master)
+$ ssh -i ~/.ssh/github_deploy_auto_movie root@85.208.51.186
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:/8HilUNLIZMpSzYpQaQ6OUFujZQ6JzJ+C2T3YwmfGso.
+Please contact your system administrator.
+Add correct host key in /c/Users/leoge/.ssh/known_hosts to get rid of this message.
+Offending ECDSA key in /c/Users/leoge/.ssh/known_hosts:27
+Host key for 85.208.51.186 has changed and you have requested strict checking.
+Host key verification failed.
 ```
 
 ### 3. Add Secrets to GitHub Repository
@@ -75,16 +106,14 @@ cat ~/.ssh/github_deploy_auto_movie
 
 #### Secret 2: `SERVER_HOST`
 
-**Value:** Server hostname or IP address
-
-**Options:**
-- Hostname: `vmd177401`
-- OR IP: `85.208.51.186`
+**Value:** Server IP address (recommended for stability)
 
 **In GitHub:**
 - Name: `SERVER_HOST`
-- Secret: `vmd177401` (or your server's hostname/IP)
+- Secret: `85.208.51.186`
 - Click `Add secret`
+
+**Note:** Using IP address is more reliable than hostname for CI/CD.
 
 #### Secret 3: `SERVER_USER`
 
@@ -152,6 +181,23 @@ Should output: `SSH connection works`
 
 ## Troubleshooting
 
+### Issue: "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED"
+
+**Cause:** Server's host key has changed (server reinstall, IP reassignment, etc.)
+
+**Solution:**
+```bash
+# Remove old host key
+ssh-keygen -R 85.208.51.186
+ssh-keygen -R vmd177401
+
+# Add new host key
+ssh-keyscan -H 85.208.51.186 >> ~/.ssh/known_hosts
+
+# Now try ssh-copy-id again
+ssh-copy-id -i ~/.ssh/github_deploy_auto_movie.pub root@85.208.51.186
+```
+
 ### Issue: "Permission denied (publickey)"
 
 **Cause:** Public key not added to server or wrong key used.
@@ -159,10 +205,10 @@ Should output: `SSH connection works`
 **Solution:**
 ```bash
 # Re-add public key to server
-ssh-copy-id -i ~/.ssh/github_deploy_auto_movie.pub root@vmd177401
+ssh-copy-id -i ~/.ssh/github_deploy_auto_movie.pub root@85.208.51.186
 
 # Verify authorized_keys on server
-ssh root@vmd177401
+ssh root@85.208.51.186
 cat ~/.ssh/authorized_keys | grep github-actions-auto-movie
 ```
 
@@ -170,10 +216,13 @@ cat ~/.ssh/authorized_keys | grep github-actions-auto-movie
 
 **Cause:** Server not in known_hosts.
 
-**Solution:** The workflow includes `ssh-keyscan` step, but you can pre-add:
+**Solution:**
 ```bash
-ssh-keyscan -H vmd177401 >> ~/.ssh/known_hosts
+# Add server to known_hosts
+ssh-keyscan -H 85.208.51.186 >> ~/.ssh/known_hosts
 ```
+
+**Note:** The GitHub Actions workflow includes `ssh-keyscan` step, so this is handled automatically during deployment.
 
 ### Issue: Workflow shows "Secret not found"
 
@@ -333,8 +382,8 @@ Before first deployment:
 ## Quick Reference
 
 **Server Details:**
-- Hostname: `vmd177401`
-- IP: `85.208.51.186`
+- IP Address: `85.208.51.186` (use this for GitHub Secrets)
+- Hostname: `vmd177401` (alternative)
 - User: `root`
 - App Path: `/var/www/movie-generation-platform/apps/auto-movie`
 - Port: `3010`
@@ -347,18 +396,18 @@ Before first deployment:
 **Key Commands:**
 ```bash
 # Test SSH connection
-ssh -i ~/.ssh/github_deploy_auto_movie root@vmd177401
+ssh -i ~/.ssh/github_deploy_auto_movie root@85.208.51.186
 
 # View GitHub secrets (can't view values, only names)
 # Go to: Settings → Secrets and variables → Actions
 
 # Manual deploy from server
-ssh root@vmd177401
+ssh root@85.208.51.186
 cd /var/www/movie-generation-platform/apps/auto-movie
 bash scripts/deploy.sh
 
 # Check PM2 status
-ssh root@vmd177401 "pm2 list | grep auto-movie"
+ssh root@85.208.51.186 "pm2 list | grep auto-movie"
 ```
 
 ## Need Help?
@@ -376,7 +425,7 @@ If deployment fails:
 
 3. **Check SSH connectivity:**
    ```bash
-   ssh -i ~/.ssh/github_deploy_auto_movie root@vmd177401 "echo 'Connection OK'"
+   ssh -i ~/.ssh/github_deploy_auto_movie root@85.208.51.186 "echo 'Connection OK'"
    ```
 
 4. **Verify secrets:**
