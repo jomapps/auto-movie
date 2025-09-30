@@ -1,0 +1,124 @@
+name: Deploy Auto-Movie to Production
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm run lint
+        continue-on-error: true
+
+      - name: Run tests
+        run: pnpm run test:int
+        continue-on-error: true
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          rsync -avz --delete \
+            --exclude=node_modules \
+            --exclude=.git \
+            --exclude=.next/cache \
+            --exclude=.env \
+            --exclude=.env.local \
+            --exclude=tests \
+            --exclude=.github \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/
+
+      - name: Install dependencies and reload PM2
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            
+            echo "📦 Installing dependencies..."
+            pnpm install --frozen-lockfile --prod
+            
+            echo "🔍 Checking if PM2 process exists..."
+            if pm2 list | grep -q "auto-movie"; then
+              echo "♻️  Reloading PM2 process (zero-downtime)..."
+              pm2 reload auto-movie --update-env
+            else
+              echo "🚀 Starting new PM2 process..."
+              pm2 start ecosystem.config.js --env production
+            fi
+            
+            echo "💾 Saving PM2 configuration..."
+            pm2 save
+            
+            echo "✅ Deployment successful!"
+            pm2 list | grep auto-movie
+          EOF
+
+      - name: Health check
+        run: |
+          sleep 5
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            if pm2 list | grep -q "auto-movie.*online"; then
+              echo "✅ Health check passed - auto-movie is online"
+              exit 0
+            else
+              echo "❌ Health check failed - auto-movie is not online"
+              pm2 logs auto-movie --lines 50 --nostream
+              exit 1
+            fi
+          EOF
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🎉 Deployment successful!"
+          else
+            echo "⚠️ Deployment failed!"
+          fi
