@@ -39,7 +39,7 @@ ssh-copy-id -i ~/.ssh/github_deploy_auto_movie.pub root@85.208.51.186
 cat ~/.ssh/github_deploy_auto_movie.pub
 # Copy the output and paste it to the server
 ssh root@85.208.51.186
-echo "PASTE_YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJYHIdAZB376tfUDHsYKJ/ViT9Jc/pXWsCazP5Tt/rPm github-actions-auto-movie" >> ~/.ssh/authorized_keys
 ```
 
 Test the connection:
@@ -48,25 +48,6 @@ Test the connection:
 # Test with new key
 ssh -i ~/.ssh/github_deploy_auto_movie root@85.208.51.186
 # Should connect without password
-```
-
-got result:
-```
-leoge@Rampyari MINGW64 /d/Projects/movie-generation-platform/apps/auto-movie (master)
-$ ssh -i ~/.ssh/github_deploy_auto_movie root@85.208.51.186
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
-Someone could be eavesdropping on you right now (man-in-the-middle attack)!
-It is also possible that a host key has just been changed.
-The fingerprint for the ED25519 key sent by the remote host is
-SHA256:/8HilUNLIZMpSzYpQaQ6OUFujZQ6JzJ+C2T3YwmfGso.
-Please contact your system administrator.
-Add correct host key in /c/Users/leoge/.ssh/known_hosts to get rid of this message.
-Offending ECDSA key in /c/Users/leoge/.ssh/known_hosts:27
-Host key for 85.208.51.186 has changed and you have requested strict checking.
-Host key verification failed.
 ```
 
 ### 3. Add Secrets to GitHub Repository
