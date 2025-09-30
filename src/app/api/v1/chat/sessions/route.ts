@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Session } from '@/payload-types'
+import { CeleryBridge } from '@/services/CeleryBridge'
+import { authenticateRequest, validateResourceOwnership } from '@/middleware/auth'
 
 // GET /api/v1/chat/sessions - List chat sessions with filtering
 export async function GET(request: NextRequest) {
@@ -12,35 +14,30 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100) // Max 100 per page
 
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    // Authenticate user with PayloadCMS
+    const authResult = await authenticateRequest(request)
+    if (!authResult.authenticated || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Authentication required' },
+        { status: 401 }
+      )
     }
 
+    const user = authResult.user
     const payload = await getPayload({ config })
-
-    // TODO: Get user ID from auth and filter sessions by user access
-    // const userId = getUserFromAuth(authHeader)
 
     // Build query filters
     const where: any = {}
 
     if (projectId) {
       // Verify project exists and user has access
-      const project = await payload.findByID({
-        collection: 'projects',
-        id: projectId,
-        depth: 0,
-      })
-
-      if (!project) {
-        return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      const hasAccess = await validateResourceOwnership(user.id, 'project', projectId)
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'You do not have access to this project' },
+          { status: 403 }
+        )
       }
-
-      // TODO: Check if user has access to this project
-      // if (!hasProjectAccess(project, userId)) {
-      //   return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-      // }
 
       where.project = { equals: projectId }
     }
@@ -49,8 +46,8 @@ export async function GET(request: NextRequest) {
       where.status = { equals: status }
     }
 
-    // TODO: Add user access filter
-    // where.participants = { contains: userId }
+    // Filter sessions by user access (sessions they own or from projects they have access to)
+    where.user = { equals: user.id }
 
     // Query sessions with pagination
     const result = await payload.find({
@@ -62,21 +59,69 @@ export async function GET(request: NextRequest) {
       sort: '-updatedAt',
     })
 
-    // Format response according to contract
+    // PHASE 0 INTEGRATION: Fetch production task status for sessions
+    const celeryBridge = new CeleryBridge()
+
+    // Format response according to contract with production status
+    const sessionsWithStatus = await Promise.all(
+      result.docs.map(async (session: Session) => {
+        // Get production task IDs from session context
+        const taskIds = (session.contextData?.productionTasks || []) as string[]
+
+        // Fetch task statuses
+        let productionStatus = {
+          totalTasks: 0,
+          pendingTasks: 0,
+          runningTasks: 0,
+          completedTasks: 0,
+          failedTasks: 0,
+        }
+
+        if (taskIds.length > 0) {
+          const taskStatuses = await Promise.all(
+            taskIds.map((taskId) => celeryBridge.getTaskStatus(taskId))
+          )
+
+          productionStatus = {
+            totalTasks: taskIds.length,
+            pendingTasks: taskStatuses.filter((t) => t?.status === 'pending').length,
+            runningTasks: taskStatuses.filter((t) => t?.status === 'running').length,
+            completedTasks: taskStatuses.filter((t) => t?.status === 'completed').length,
+            failedTasks: taskStatuses.filter((t) => t?.status === 'failed').length,
+          }
+        }
+
+        // Count created entities
+        const createdEntities = session.contextData?.createdEntities || {
+          characters: [],
+          scenes: [],
+          locations: [],
+        }
+
+        return {
+          id: session.id,
+          title: `Session ${session.id}`,
+          projectId: session.project,
+          projectName: '',
+          status: session.sessionState || 'active',
+          messageCount: Array.isArray(session.conversationHistory)
+            ? session.conversationHistory.length
+            : 0,
+          lastActivity: session.updatedAt,
+          createdAt: session.createdAt,
+          participants: [],
+          productionStatus,
+          createdEntitiesCount: {
+            characters: createdEntities.characters?.length || 0,
+            scenes: createdEntities.scenes?.length || 0,
+            locations: createdEntities.locations?.length || 0,
+          },
+        }
+      })
+    )
+
     const response = {
-      sessions: result.docs.map((session: Session) => ({
-        id: session.id,
-        title: `Session ${session.id}`, // Session interface doesn't have title property
-        projectId: session.project, // Session interface defines project as string
-        projectName: '', // Would need to fetch project details separately
-        status: session.sessionState || 'active', // Using sessionState from Session interface
-        messageCount: Array.isArray(session.conversationHistory)
-          ? session.conversationHistory.length
-          : 0,
-        lastActivity: session.updatedAt,
-        createdAt: session.createdAt,
-        participants: [], // Session interface doesn't have participants property
-      })),
+      sessions: sessionsWithStatus,
       pagination: {
         page: result.page || 1,
         limit: result.limit,
@@ -100,11 +145,16 @@ export async function GET(request: NextRequest) {
 // POST /api/v1/chat/sessions - Create a new chat session
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    // Authenticate user with PayloadCMS
+    const authResult = await authenticateRequest(request)
+    if (!authResult.authenticated || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Authentication required' },
+        { status: 401 }
+      )
     }
 
+    const user = authResult.user
     const data = await request.json()
     const { projectId, title: _title, initialMessage } = data
 
@@ -123,27 +173,19 @@ export async function POST(request: NextRequest) {
 
     const payload = await getPayload({ config })
 
-    // Verify project exists and user has access
-    const project = await payload.findByID({
-      collection: 'projects',
-      id: projectId,
-      depth: 0,
-    })
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    // Verify user has access to create sessions for this project
+    const hasAccess = await validateResourceOwnership(user.id, 'project', projectId)
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'You do not have access to this project' },
+        { status: 403 }
+      )
     }
-
-    // TODO: Check if user has access to create sessions for this project
-    // const userId = getUserFromAuth(authHeader)
-    // if (!hasProjectAccess(project, userId)) {
-    //   return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    // }
 
     // Create new session
     const sessionData = {
       project: projectId,
-      user: 'temp-user-id', // TODO: Get actual user ID from auth
+      user: user.id,
       currentStep: 'initial',
       conversationHistory: initialMessage
         ? [
@@ -162,17 +204,33 @@ export async function POST(request: NextRequest) {
       data: sessionData,
     })) as Session
 
-    // Format response
+    // PHASE 0 INTEGRATION: Format response with workflow and production status
     const response = {
       id: session.id,
-      title: `Session ${session.id}`, // Session interface doesn't have title property
+      title: `Session ${session.id}`,
       projectId: session.project,
       status: session.sessionState || 'active',
       messageCount: Array.isArray(session.conversationHistory)
         ? session.conversationHistory.length
         : 0,
-      participants: [], // Session interface doesn't have participants property
+      participants: [],
       createdAt: session.createdAt,
+      workflowState: {
+        currentStep: session.currentStep,
+        completedSteps: [],
+      },
+      productionStatus: {
+        totalTasks: 0,
+        pendingTasks: 0,
+        runningTasks: 0,
+        completedTasks: 0,
+        failedTasks: 0,
+      },
+      createdEntitiesCount: {
+        characters: 0,
+        scenes: 0,
+        locations: 0,
+      },
     }
 
     return NextResponse.json(response, { status: 201 })

@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { workflowEngine } from '@/services/WorkflowEngine'
+import { CeleryBridge } from '@/services/CeleryBridge'
+import type { WorkflowPhase } from '@/types/workflow'
+import { authenticateRequest, validateResourceOwnership } from '@/middleware/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate user with PayloadCMS
+    const authResult = await authenticateRequest(request)
+    if (!authResult.authenticated || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const user = authResult.user
     const payload = await getPayload({ config })
     const body = await request.json()
     const { sessionId, choiceId, customInput } = body
@@ -22,10 +36,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    // Get project to access progress
+    // Verify user has access to this session (via project access)
+    const hasAccess = await validateResourceOwnership(user.id, 'session', sessionId)
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'You do not have access to this session' },
+        { status: 403 }
+      )
+    }
+
+    // Get project to access progress and entity counts
     const project = await payload.findByID({
       collection: 'projects',
       id: session.project,
+      depth: 2,
     })
 
     // Handle manual override
@@ -38,18 +62,86 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // PHASE 0 INTEGRATION: Determine next step based on choice
+    let nextStep = session.currentStep
+    const stepMapping: Record<string, WorkflowPhase> = {
+      develop_story: 'story_development',
+      create_characters: 'character_creation',
+      develop_scenes: 'scene_planning',
+      define_locations: 'location_setup',
+      start_production: 'production',
+    }
+
+    if (choiceId !== 'manual_override' && stepMapping[choiceId]) {
+      nextStep = stepMapping[choiceId]
+    }
+
+    // PHASE 0 INTEGRATION: Validate step advancement with WorkflowEngine
+    if (nextStep !== session.currentStep) {
+      const completedSteps = (project?.progress?.completedSteps || []) as WorkflowPhase[]
+
+      // Count entities from project
+      const characterCount = await payload.count({
+        collection: 'characters',
+        where: { project: { equals: project.id } },
+      })
+
+      const sceneCount = await payload.count({
+        collection: 'scenes',
+        where: { project: { equals: project.id } },
+      })
+
+      const locationCount = await payload.count({
+        collection: 'locations',
+        where: { project: { equals: project.id } },
+      })
+
+      const episodeCount = await payload.count({
+        collection: 'episodes',
+        where: { project: { equals: project.id } },
+      })
+
+      const validation = await workflowEngine.validateStepAdvancement(
+        session.currentStep as WorkflowPhase,
+        nextStep as WorkflowPhase,
+        {
+          projectId: project.id,
+          currentStep: session.currentStep,
+          entities: {
+            characters: characterCount.totalDocs,
+            scenes: sceneCount.totalDocs,
+            locations: locationCount.totalDocs,
+            episodes: episodeCount.totalDocs,
+            assets: 0,
+          },
+        }
+      )
+
+      if (!validation.valid) {
+        return NextResponse.json(
+          {
+            error: 'Cannot advance to this step',
+            validationErrors: validation.errors,
+            warnings: validation.warnings,
+            suggestions: validation.suggestions,
+            currentStep: session.currentStep,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Process choice selection
     let aiResponse = ''
-    let nextStep = session.currentStep
 
     if (choiceId === 'manual_override') {
       aiResponse = `I understand you want to ${customInput}. Let me help you with that specific direction.`
     } else if (choiceId === 'develop_story') {
       aiResponse = `Great choice! Let's start developing your story structure. I'll help you create a compelling narrative arc.`
-      nextStep = 'story_development'
     } else if (choiceId === 'create_characters') {
       aiResponse = `Excellent! Character development is crucial. Let's create memorable characters for your story.`
-      nextStep = 'character_creation'
+    } else if (choiceId === 'develop_scenes') {
+      aiResponse = `Perfect! Let's plan out the scenes for your story. We'll structure them to create maximum impact.`
     } else {
       aiResponse = `I'll help you with that selection. Let's continue developing your movie project.`
     }
@@ -94,6 +186,35 @@ export async function POST(request: NextRequest) {
       },
     ]
 
+    // PHASE 0 INTEGRATION: Trigger production workflows if advancing to production
+    const productionTasks: string[] = []
+
+    if (nextStep === 'production' && session.currentStep !== 'production') {
+      const celeryBridge = new CeleryBridge()
+
+      // Get all scenes for the project
+      const scenes = await payload.find({
+        collection: 'scenes',
+        where: { project: { equals: project.id } },
+        limit: 100,
+      })
+
+      console.log('[Chat Choice] Starting production for', scenes.docs.length, 'scenes')
+
+      // Trigger scene generation for each scene
+      for (const scene of scenes.docs) {
+        try {
+          const task = await celeryBridge.triggerSceneGeneration({
+            sceneId: scene.id,
+            projectId: project.id,
+          })
+          productionTasks.push(task.taskId)
+        } catch (error) {
+          console.error('[Chat Choice] Failed to trigger scene generation:', error)
+        }
+      }
+    }
+
     // Update session
     await payload.update({
       collection: 'sessions',
@@ -103,8 +224,37 @@ export async function POST(request: NextRequest) {
         currentStep: nextStep,
         lastChoices: choices,
         awaitingUserInput: true,
+        contextData: {
+          ...(session.contextData || {}),
+          lastChoice: choiceId,
+          productionTasks: [
+            ...((session.contextData?.productionTasks as string[]) || []),
+            ...productionTasks,
+          ],
+        },
       },
     })
+
+    // Update project workflow progress
+    if (nextStep !== session.currentStep) {
+      const completedSteps = (project?.progress?.completedSteps || []) as WorkflowPhase[]
+
+      if (!completedSteps.includes(session.currentStep as WorkflowPhase)) {
+        completedSteps.push(session.currentStep as WorkflowPhase)
+      }
+
+      await payload.update({
+        collection: 'projects',
+        id: project.id,
+        data: {
+          progress: {
+            currentPhase: nextStep as WorkflowPhase,
+            completedSteps,
+            overallProgress: Math.min((project?.progress?.overallProgress || 0) + 10, 100),
+          },
+        },
+      })
+    }
 
     return NextResponse.json({
       sessionId: session.id,
@@ -112,6 +262,11 @@ export async function POST(request: NextRequest) {
       choices,
       currentStep: nextStep,
       progress: Math.min((project?.progress?.overallProgress || 0) + 10, 100),
+      productionTasks: productionTasks.map((taskId) => ({
+        taskId,
+        status: 'pending',
+        type: 'scene_generation',
+      })),
     })
   } catch (error) {
     console.error('Chat choice processing error:', error)
