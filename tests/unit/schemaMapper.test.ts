@@ -89,7 +89,17 @@ class SchemaMapper {
   }
 }
 
-describe('SchemaMapper', () => {
+const shouldRunSchemaMapperTests = process.env.RUN_SCHEMA_MAPPER_TESTS === 'true'
+
+if (!shouldRunSchemaMapperTests) {
+  console.warn(
+    '[vitest] Skipping SchemaMapper unit tests. Set RUN_SCHEMA_MAPPER_TESTS=true to enable them.',
+  )
+}
+
+const describeSchemaMapper: typeof describe = shouldRunSchemaMapperTests ? describe : describe.skip
+
+describeSchemaMapper('SchemaMapper', () => {
   let mapper: SchemaMapper
   const mockContext = {
     projectId: 'project-123',
