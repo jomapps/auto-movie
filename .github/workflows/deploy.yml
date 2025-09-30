@@ -79,6 +79,11 @@ jobs:
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
+            
+            # Load NVM and setup PATH
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
             cd ${{ secrets.DEPLOY_PATH }}
             
             echo "📦 Installing dependencies..."
@@ -104,6 +109,10 @@ jobs:
         run: |
           sleep 5
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # Load NVM and setup PATH
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
             if pm2 list | grep -q "auto-movie.*online"; then
               echo "✅ Health check passed - auto-movie is online"
               exit 0
