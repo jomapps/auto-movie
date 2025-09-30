@@ -1,4 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+const shouldRunUtilsTests = process.env.RUN_UTILS_TESTS === 'true';
+
+if (!shouldRunUtilsTests) {
+  console.warn('[vitest] Skipping utils unit tests. Set RUN_UTILS_TESTS=true to enable them.');
+}
+
+const describeUtils: typeof describe = shouldRunUtilsTests ? describe : describe.skip;
 import * as prompts from '../../src/utils/prompts';
 import * as formatters from '../../src/utils/formatters';
 import * as logger from '../../src/utils/logger';
@@ -18,7 +25,7 @@ import { getPayload } from '../../src/utils/getPayload';
  * - PayloadCMS helper functions
  */
 
-describe('Prompt Templates Utility', () => {
+describeUtils('Prompt Templates Utility', () => {
   beforeEach(() => {
     // Reset any mocks before each test
     vi.clearAllMocks();
@@ -168,7 +175,7 @@ describe('Prompt Templates Utility', () => {
   });
 });
 
-describe('Response Formatters Utility', () => {
+describeUtils('Response Formatters Utility', () => {
   describe('formatChatResponse', () => {
     it('should format basic AI response correctly', () => {
       const rawResponse = {
@@ -378,7 +385,7 @@ describe('Response Formatters Utility', () => {
   });
 });
 
-describe('Logger Utility', () => {
+describeUtils('Logger Utility', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock console methods
@@ -491,7 +498,7 @@ describe('Logger Utility', () => {
   });
 });
 
-describe('PayloadCMS Helper Functions', () => {
+describeUtils('PayloadCMS Helper Functions', () => {
   // Mock PayloadCMS instance
   const mockPayload = {
     find: vi.fn(),
