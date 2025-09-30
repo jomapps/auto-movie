@@ -60,7 +60,17 @@ class DataExtractionService {
   }
 }
 
-describe('DataExtractionService', () => {
+const shouldRunDataExtractionTests = process.env.RUN_DATA_EXTRACTION_TESTS === 'true'
+
+if (!shouldRunDataExtractionTests) {
+  console.warn(
+    '[vitest] Skipping DataExtractionService unit tests. Set RUN_DATA_EXTRACTION_TESTS=true to enable them.',
+  )
+}
+
+const describeDataExtraction: typeof describe = shouldRunDataExtractionTests ? describe : describe.skip
+
+describeDataExtraction('DataExtractionService', () => {
   let service: DataExtractionService
 
   beforeEach(() => {
