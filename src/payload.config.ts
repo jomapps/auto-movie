@@ -10,6 +10,10 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Projects } from './collections/Projects'
 import { Sessions } from './collections/Sessions'
+import { Characters } from './collections/Characters'
+import { Episodes } from './collections/Episodes'
+import { Scenes } from './collections/Scenes'
+import { Tasks } from './collections/Tasks'
 import { PromptTemplates } from './collections/PromptTemplates'
 import { PromptsExecuted } from './collections/PromptsExecuted'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -47,7 +51,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Projects, Sessions, PromptTemplates, PromptsExecuted],
+  collections: [Users, Media, Projects, Sessions, Characters, Episodes, Scenes, Tasks, PromptTemplates, PromptsExecuted],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'ae6e18cb408bc7128f23585casdlaelwlekoqdsldsa',
   typescript: {

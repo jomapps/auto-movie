@@ -11,18 +11,18 @@ import config from '@payload-config'
 import { createAuthenticatedHandler } from '@/middleware/auth'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     jobId: string
-  }
+  }>
 }
 
 /**
  * GET /api/v1/movies/status/:jobId
  * Retrieve status and progress of a generation job
  */
-async function handleGetStatus(request: NextRequest, user: any, { params }: RouteParams) {
+async function handleGetStatus(request: NextRequest, user: any, context: RouteParams) {
   try {
-    const { jobId } = params
+    const { jobId } = await context.params
 
     if (!jobId) {
       return NextResponse.json(

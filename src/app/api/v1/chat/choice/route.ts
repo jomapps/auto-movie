@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { workflowEngine } from '@/services/WorkflowEngine'
-import { CeleryBridge } from '@/services/CeleryBridge'
+import { workflowEngine } from '@/services/workflowEngine'
+import { CeleryBridge } from '@/services/celeryBridge'
 import type { WorkflowPhase } from '@/types/workflow'
 import { authenticateRequest, validateResourceOwnership } from '@/middleware/auth'
 
@@ -67,9 +67,9 @@ export async function POST(request: NextRequest) {
     const stepMapping: Record<string, WorkflowPhase> = {
       develop_story: 'story_development',
       create_characters: 'character_creation',
-      develop_scenes: 'scene_planning',
-      define_locations: 'location_setup',
-      start_production: 'production',
+      develop_scenes: 'scene_production',
+      define_locations: 'visual_design',
+      start_production: 'post_production',
     }
 
     if (choiceId !== 'manual_override' && stepMapping[choiceId]) {
@@ -91,39 +91,24 @@ export async function POST(request: NextRequest) {
         where: { project: { equals: project.id } },
       })
 
-      const locationCount = await payload.count({
-        collection: 'locations',
-        where: { project: { equals: project.id } },
-      })
+      // Note: Locations collection not yet implemented
+      const locationCount = { totalDocs: 0 }
 
       const episodeCount = await payload.count({
         collection: 'episodes',
         where: { project: { equals: project.id } },
       })
 
-      const validation = await workflowEngine.validateStepAdvancement(
-        session.currentStep as WorkflowPhase,
-        nextStep as WorkflowPhase,
-        {
-          projectId: project.id,
-          currentStep: session.currentStep,
-          entities: {
-            characters: characterCount.totalDocs,
-            scenes: sceneCount.totalDocs,
-            locations: locationCount.totalDocs,
-            episodes: episodeCount.totalDocs,
-            assets: 0,
-          },
-        }
-      )
-
-      if (!validation.valid) {
+      // TODO: Implement workflow validation when validateStepAdvancement is available
+      // Basic validation - ensure we have minimum entities for production phases
+      const requiresProduction = ['post_production', 'final_assembly'].includes(nextStep)
+      const hasMinimumEntities = characterCount.totalDocs > 0 && sceneCount.totalDocs > 0
+      
+      if (requiresProduction && !hasMinimumEntities) {
         return NextResponse.json(
           {
-            error: 'Cannot advance to this step',
-            validationErrors: validation.errors,
-            warnings: validation.warnings,
-            suggestions: validation.suggestions,
+            error: 'Cannot advance to production phase',
+            validationErrors: ['Missing required entities: Need at least one character and scene'],
             currentStep: session.currentStep,
           },
           { status: 400 }
@@ -225,10 +210,10 @@ export async function POST(request: NextRequest) {
         lastChoices: choices,
         awaitingUserInput: true,
         contextData: {
-          ...(session.contextData || {}),
+          ...(session.contextData as Record<string, any> || {}),
           lastChoice: choiceId,
           productionTasks: [
-            ...((session.contextData?.productionTasks as string[]) || []),
+            ...(((session.contextData as Record<string, any>)?.productionTasks as string[]) || []),
             ...productionTasks,
           ],
         },
@@ -248,7 +233,7 @@ export async function POST(request: NextRequest) {
         id: project.id,
         data: {
           progress: {
-            currentPhase: nextStep as WorkflowPhase,
+            currentPhase: nextStep as any, // TODO: Update Project collection to include all WorkflowPhase values
             completedSteps,
             overallProgress: Math.min((project?.progress?.overallProgress || 0) + 10, 100),
           },

@@ -127,13 +127,12 @@ async function handleGenerate(request: NextRequest, user: any) {
       data: {
         user: user.id,
         project: data.projectId,
-        sessionType: 'movie_generation',
-        metadata: {
+        contextData: {
           jobId,
           status: 'queued',
           request: data,
           createdAt: new Date().toISOString(),
-        },
+        } as any,
       },
     })
 

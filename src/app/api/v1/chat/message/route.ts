@@ -4,7 +4,7 @@ import config from '@payload-config'
 import { OpenRouterLLMService } from '@/services/OpenRouterLLMService'
 import { DataExtractionService } from '@/services/DataExtractionService'
 import { PayloadIntegrationService } from '@/services/PayloadIntegrationService'
-import { CeleryBridge } from '@/services/CeleryBridge'
+import { CeleryBridge } from '@/services/celeryBridge'
 import { authenticateRequest, validateResourceOwnership } from '@/middleware/auth'
 
 export async function POST(request: NextRequest) {
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     })
 
     // PHASE 0 INTEGRATION: Create entities in PayloadCMS
-    let createdEntities = {
+    let createdEntities: any = {
       characters: [],
       scenes: [],
       locations: [],
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
         lastChoices: choices,
         awaitingUserInput: true,
         contextData: {
-          ...(session.contextData || {}),
+          ...(session.contextData as Record<string, any> || {}),
           lastExtraction: {
             entities: extracted.entities.map((e) => ({
               type: e.type,
@@ -223,9 +223,9 @@ export async function POST(request: NextRequest) {
       currentStep: session.currentStep,
       progress: 5, // Basic progress increment
       createdEntities: {
-        characters: createdEntities.characters.map((c) => ({ id: c.id, name: c.name })),
-        scenes: createdEntities.scenes.map((s) => ({ id: s.id, title: s.title })),
-        locations: createdEntities.locations.map((l) => ({ id: l.id, name: l.name })),
+        characters: createdEntities.characters.map((c: any) => ({ id: c.id, name: c.name })),
+        scenes: createdEntities.scenes.map((s: any) => ({ id: s.id, title: s.title })),
+        locations: createdEntities.locations.map((l: any) => ({ id: l.id, name: l.name })),
       },
       productionTasks: productionTasks.map((taskId) => ({
         taskId,

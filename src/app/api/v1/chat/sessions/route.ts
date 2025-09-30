@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Session } from '@/payload-types'
-import { CeleryBridge } from '@/services/CeleryBridge'
+import { CeleryBridge } from '@/services/celeryBridge'
 import { authenticateRequest, validateResourceOwnership } from '@/middleware/auth'
 
 // GET /api/v1/chat/sessions - List chat sessions with filtering
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const sessionsWithStatus = await Promise.all(
       result.docs.map(async (session: Session) => {
         // Get production task IDs from session context
-        const taskIds = (session.contextData?.productionTasks || []) as string[]
+        const taskIds = ((session.contextData as Record<string, any>)?.productionTasks || []) as string[]
 
         // Fetch task statuses
         let productionStatus = {
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Count created entities
-        const createdEntities = session.contextData?.createdEntities || {
+        const createdEntities = (session.contextData as Record<string, any>)?.createdEntities || {
           characters: [],
           scenes: [],
           locations: [],

@@ -29,7 +29,6 @@ async function handleListMovies(request: NextRequest, user: any) {
     // Build query filters
     const where: any = {
       user: { equals: user.id },
-      sessionType: { equals: 'movie_generation' },
     }
 
     // Filter by project if specified

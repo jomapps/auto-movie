@@ -71,6 +71,10 @@ export interface Config {
     media: Media;
     projects: Project;
     sessions: Session;
+    characters: Character;
+    episodes: Episode;
+    scenes: Scene;
+    tasks: Task;
     'prompt-templates': PromptTemplate;
     'prompts-executed': PromptsExecuted;
     'payload-locked-documents': PayloadLockedDocument;
@@ -83,6 +87,10 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     sessions: SessionsSelect<false> | SessionsSelect<true>;
+    characters: CharactersSelect<false> | CharactersSelect<true>;
+    episodes: EpisodesSelect<false> | EpisodesSelect<true>;
+    scenes: ScenesSelect<false> | ScenesSelect<true>;
+    tasks: TasksSelect<false> | TasksSelect<true>;
     'prompt-templates': PromptTemplatesSelect<false> | PromptTemplatesSelect<true>;
     'prompts-executed': PromptsExecutedSelect<false> | PromptsExecutedSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -449,30 +457,29 @@ export interface Session {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "prompt-templates".
+ * via the `definition` "characters".
  */
-export interface PromptTemplate {
+export interface Character {
   id: string;
-  name: string;
-  app: string;
-  feature?: string | null;
-  stage: string;
-  tags?:
-    | {
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
   /**
-   * Template with placeholders like {{variableName}}
+   * Project this character belongs to
    */
-  template: string;
-  variableDefs: {
-    name: string;
-    type: 'string' | 'number' | 'boolean' | 'json' | 'text' | 'url';
-    required?: boolean | null;
-    description?: string | null;
-    defaultValue?:
+  project: string | Project;
+  name: string;
+  description: string;
+  profile?: {
+    /**
+     * Character age or age range
+     */
+    age?: string | null;
+    /**
+     * Character gender
+     */
+    gender?: string | null;
+    /**
+     * Array of personality traits
+     */
+    personality?:
       | {
           [k: string]: unknown;
         }
@@ -481,23 +488,447 @@ export interface PromptTemplate {
       | number
       | boolean
       | null;
-    id?: string | null;
-  }[];
-  outputSchema?:
+    /**
+     * Character backstory and history
+     */
+    backstory?: string | null;
+    /**
+     * Array of character motivations and goals
+     */
+    motivations?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    relationships?:
+      | {
+          /**
+           * Related character
+           */
+          character?: (string | null) | Character;
+          relationshipType?: ('family' | 'friend' | 'enemy' | 'romantic' | 'rival' | 'mentor' | 'other') | null;
+          /**
+           * Describe the relationship
+           */
+          description?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  visualDesign?: {
+    /**
+     * Reference images for character design
+     */
+    referenceImages?: (string | Media)[] | null;
+    /**
+     * Final approved character design
+     */
+    finalDesign?: (string | null) | Media;
+    /**
+     * Style guidelines and notes
+     */
+    styleNotes?: string | null;
+    /**
+     * Array of hex color codes for character palette
+     */
+    colorPalette?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  voiceProfile?: {
+    /**
+     * ElevenLabs or other TTS voice ID
+     */
+    voiceId?: string | null;
+    /**
+     * Sample audio of character voice
+     */
+    audioSample?: (string | null) | Media;
+    /**
+     * Array of voice characteristics (pitch, tone, accent, etc.)
+     */
+    voiceCharacteristics?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  /**
+   * Track character appearances across episodes
+   */
+  appearances?:
     | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+        episode?: (string | null) | Episode;
+        /**
+         * Array of scene IDs where character appears
+         */
+        sceneIds?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * Total screen time in seconds
+         */
+        screenTime?: number | null;
+        id?: string | null;
+      }[]
     | null;
-  model:
-    | 'anthropic/claude-sonnet-4'
-    | 'qwen/qwen3-vl-235b-a22b-thinking'
-    | 'fal-ai/nano-banana'
-    | 'fal-ai/nano-banana/edit';
-  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "episodes".
+ */
+export interface Episode {
+  id: string;
+  /**
+   * Parent project for this episode
+   */
+  project: string | Project;
+  /**
+   * Episode number in the series
+   */
+  episodeNumber: number;
+  title: string;
+  description?: string | null;
+  synopsis?: {
+    /**
+     * One-sentence summary
+     */
+    logline?: string | null;
+    /**
+     * Full episode summary
+     */
+    summary?: string | null;
+    /**
+     * Array of themes explored in this episode
+     */
+    themes?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  status: 'planning' | 'scripting' | 'storyboarding' | 'production' | 'editing' | 'completed';
+  script?: {
+    /**
+     * Full script content
+     */
+    content?: string | null;
+    /**
+     * Script version number
+     */
+    version?: number | null;
+    /**
+     * Total word count
+     */
+    wordCount?: number | null;
+    /**
+     * Estimated duration in seconds
+     */
+    estimatedDuration?: number | null;
+  };
+  /**
+   * Production progress tracking
+   */
+  production?: {
+    sceneCount?: number | null;
+    completedScenes?: number | null;
+    /**
+     * Overall render progress percentage
+     */
+    renderProgress?: number | null;
+  };
+  metadata?: {
+    /**
+     * Actual duration in seconds (after rendering)
+     */
+    duration?: number | null;
+    /**
+     * Final rendered episode video
+     */
+    finalVideo?: (string | null) | Media;
+    /**
+     * Episode thumbnail image
+     */
+    thumbnail?: (string | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "scenes".
+ */
+export interface Scene {
+  id: string;
+  /**
+   * Parent project
+   */
+  project: string | Project;
+  /**
+   * Episode this scene belongs to
+   */
+  episode: string | Episode;
+  /**
+   * Scene number within the episode
+   */
+  sceneNumber: number;
+  title: string;
+  script?: {
+    /**
+     * Scene action and direction
+     */
+    action?: string | null;
+    dialogue?:
+      | {
+          character: string | Character;
+          /**
+           * Character dialogue
+           */
+          lines: string;
+          emotion?: ('neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'surprised' | 'excited') | null;
+          /**
+           * Timing in seconds for this dialogue
+           */
+          timing?: number | null;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Estimated scene duration in seconds
+     */
+    duration?: number | null;
+  };
+  storyboard?: {
+    panels?:
+      | {
+          panelNumber: number;
+          /**
+           * Visual description of the panel
+           */
+          description?: string | null;
+          image?: (string | null) | Media;
+          cameraAngle?:
+            | (
+                | 'wide'
+                | 'medium'
+                | 'closeup'
+                | 'extreme_closeup'
+                | 'over_shoulder'
+                | 'birds_eye'
+                | 'low_angle'
+                | 'high_angle'
+              )
+            | null;
+          /**
+           * Additional notes for this panel
+           */
+          notes?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Production status and assets
+   */
+  production: {
+    status: 'pending' | 'generating' | 'reviewing' | 'approved' | 'failed';
+    /**
+     * Generated video for this scene
+     */
+    videoSegment?: (string | null) | Media;
+    /**
+     * Audio track for this scene
+     */
+    audioTrack?: (string | null) | Media;
+    /**
+     * Number of generation attempts
+     */
+    attempts?: number | null;
+    lastAttempt?: string | null;
+  };
+  /**
+   * Characters appearing in this scene
+   */
+  characters?: (string | Character)[] | null;
+  /**
+   * Scene location or setting
+   */
+  location?: string | null;
+  timeOfDay?: ('dawn' | 'day' | 'dusk' | 'night') | null;
+  /**
+   * Overall mood or atmosphere of the scene
+   */
+  mood?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasks".
+ */
+export interface Task {
+  id: string;
+  /**
+   * Type of task to be executed
+   */
+  taskType:
+    | 'image_generation'
+    | 'video_generation'
+    | 'audio_generation'
+    | 'script_generation'
+    | 'embedding_generation'
+    | 'scene_assembly';
+  /**
+   * Project this task belongs to
+   */
+  project: string | Project;
+  /**
+   * Related episode (if applicable)
+   */
+  episode?: (string | null) | Episode;
+  /**
+   * Related scene (if applicable)
+   */
+  scene?: (string | null) | Scene;
+  /**
+   * Related character (if applicable)
+   */
+  character?: (string | null) | Character;
+  /**
+   * Current task status
+   */
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  /**
+   * Task priority (1=lowest, 10=highest)
+   */
+  priority: number;
+  input?: {
+    /**
+     * Prompt execution record for this task
+     */
+    prompt?: (string | null) | PromptsExecuted;
+    /**
+     * Task-specific input parameters
+     */
+    parameters?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    /**
+     * Tasks that must complete before this one
+     */
+    dependencies?: (string | Task)[] | null;
+  };
+  output?: {
+    /**
+     * Generated media asset
+     */
+    media?: (string | null) | Media;
+    /**
+     * Task result data
+     */
+    result?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    metrics?: {
+      /**
+       * Processing time in seconds
+       */
+      processingTime?: number | null;
+      /**
+       * Cost in credits or currency
+       */
+      cost?: number | null;
+      /**
+       * AI tokens consumed
+       */
+      tokensUsed?: number | null;
+    };
+  };
+  progress?: {
+    /**
+     * Progress percentage
+     */
+    percentage?: number | null;
+    /**
+     * Current processing step
+     */
+    currentStep?: string | null;
+    /**
+     * Estimated completion time
+     */
+    estimatedCompletion?: string | null;
+  };
+  error?: {
+    /**
+     * Error message
+     */
+    message?: string | null;
+    /**
+     * Error code
+     */
+    code?: string | null;
+    /**
+     * Number of retry attempts
+     */
+    retryCount?: number | null;
+    /**
+     * Timestamp of last retry
+     */
+    lastRetry?: string | null;
+  };
+  worker?: {
+    /**
+     * ID of the worker processing this task
+     */
+    workerId?: string | null;
+    /**
+     * When processing started
+     */
+    startedAt?: string | null;
+    /**
+     * Last heartbeat from worker
+     */
+    heartbeat?: string | null;
+  };
+  completedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -554,6 +985,60 @@ export interface PromptsExecuted {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompt-templates".
+ */
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  app: string;
+  feature?: string | null;
+  stage: string;
+  tags?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Template with placeholders like {{variableName}}
+   */
+  template: string;
+  variableDefs: {
+    name: string;
+    type: 'string' | 'number' | 'boolean' | 'json' | 'text' | 'url';
+    required?: boolean | null;
+    description?: string | null;
+    defaultValue?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    id?: string | null;
+  }[];
+  outputSchema?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  model:
+    | 'anthropic/claude-sonnet-4'
+    | 'qwen/qwen3-vl-235b-a22b-thinking'
+    | 'fal-ai/nano-banana'
+    | 'fal-ai/nano-banana/edit';
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -574,6 +1059,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'sessions';
         value: string | Session;
+      } | null)
+    | ({
+        relationTo: 'characters';
+        value: string | Character;
+      } | null)
+    | ({
+        relationTo: 'episodes';
+        value: string | Episode;
+      } | null)
+    | ({
+        relationTo: 'scenes';
+        value: string | Scene;
+      } | null)
+    | ({
+        relationTo: 'tasks';
+        value: string | Task;
       } | null)
     | ({
         relationTo: 'prompt-templates';
@@ -777,6 +1278,211 @@ export interface SessionsSelect<T extends boolean = true> {
   awaitingUserInput?: T;
   lastChoices?: T;
   sessionState?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "characters_select".
+ */
+export interface CharactersSelect<T extends boolean = true> {
+  project?: T;
+  name?: T;
+  description?: T;
+  profile?:
+    | T
+    | {
+        age?: T;
+        gender?: T;
+        personality?: T;
+        backstory?: T;
+        motivations?: T;
+        relationships?:
+          | T
+          | {
+              character?: T;
+              relationshipType?: T;
+              description?: T;
+              id?: T;
+            };
+      };
+  visualDesign?:
+    | T
+    | {
+        referenceImages?: T;
+        finalDesign?: T;
+        styleNotes?: T;
+        colorPalette?: T;
+      };
+  voiceProfile?:
+    | T
+    | {
+        voiceId?: T;
+        audioSample?: T;
+        voiceCharacteristics?: T;
+      };
+  appearances?:
+    | T
+    | {
+        episode?: T;
+        sceneIds?: T;
+        screenTime?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "episodes_select".
+ */
+export interface EpisodesSelect<T extends boolean = true> {
+  project?: T;
+  episodeNumber?: T;
+  title?: T;
+  description?: T;
+  synopsis?:
+    | T
+    | {
+        logline?: T;
+        summary?: T;
+        themes?: T;
+      };
+  status?: T;
+  script?:
+    | T
+    | {
+        content?: T;
+        version?: T;
+        wordCount?: T;
+        estimatedDuration?: T;
+      };
+  production?:
+    | T
+    | {
+        sceneCount?: T;
+        completedScenes?: T;
+        renderProgress?: T;
+      };
+  metadata?:
+    | T
+    | {
+        duration?: T;
+        finalVideo?: T;
+        thumbnail?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "scenes_select".
+ */
+export interface ScenesSelect<T extends boolean = true> {
+  project?: T;
+  episode?: T;
+  sceneNumber?: T;
+  title?: T;
+  script?:
+    | T
+    | {
+        action?: T;
+        dialogue?:
+          | T
+          | {
+              character?: T;
+              lines?: T;
+              emotion?: T;
+              timing?: T;
+              id?: T;
+            };
+        duration?: T;
+      };
+  storyboard?:
+    | T
+    | {
+        panels?:
+          | T
+          | {
+              panelNumber?: T;
+              description?: T;
+              image?: T;
+              cameraAngle?: T;
+              notes?: T;
+              id?: T;
+            };
+      };
+  production?:
+    | T
+    | {
+        status?: T;
+        videoSegment?: T;
+        audioTrack?: T;
+        attempts?: T;
+        lastAttempt?: T;
+      };
+  characters?: T;
+  location?: T;
+  timeOfDay?: T;
+  mood?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasks_select".
+ */
+export interface TasksSelect<T extends boolean = true> {
+  taskType?: T;
+  project?: T;
+  episode?: T;
+  scene?: T;
+  character?: T;
+  status?: T;
+  priority?: T;
+  input?:
+    | T
+    | {
+        prompt?: T;
+        parameters?: T;
+        dependencies?: T;
+      };
+  output?:
+    | T
+    | {
+        media?: T;
+        result?: T;
+        metrics?:
+          | T
+          | {
+              processingTime?: T;
+              cost?: T;
+              tokensUsed?: T;
+            };
+      };
+  progress?:
+    | T
+    | {
+        percentage?: T;
+        currentStep?: T;
+        estimatedCompletion?: T;
+      };
+  error?:
+    | T
+    | {
+        message?: T;
+        code?: T;
+        retryCount?: T;
+        lastRetry?: T;
+      };
+  worker?:
+    | T
+    | {
+        workerId?: T;
+        startedAt?: T;
+        heartbeat?: T;
+      };
+  completedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
