@@ -2,9 +2,8 @@ import { it, expect } from 'vitest'
 import { describeContract, getContractBaseUrl } from './utils'
 
 describeContract('POST /api/v1/chat/upload Contract', () => {
-  const BASE_URL = getContractBaseUrl()
-
   it('should accept valid file upload', async () => {
+    const baseUrl = getContractBaseUrl()
     const formData = new FormData()
     formData.append('projectId', 'test-project-id')
     formData.append('sessionId', 'test-session-id')
@@ -16,7 +15,7 @@ describeContract('POST /api/v1/chat/upload Contract', () => {
     formData.append('files', testFile)
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`${BASE_URL}/api/v1/chat/upload`, {
+    const response = await fetch(`${baseUrl}/api/v1/chat/upload`, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -36,6 +35,7 @@ describeContract('POST /api/v1/chat/upload Contract', () => {
   })
 
   it('should reject files exceeding size limits', async () => {
+    const baseUrl = getContractBaseUrl()
     const formData = new FormData()
     formData.append('projectId', 'test-project-id')
     
@@ -45,7 +45,7 @@ describeContract('POST /api/v1/chat/upload Contract', () => {
     })
     formData.append('files', largeFile)
 
-    const response = await fetch(`${BASE_URL}/api/v1/chat/upload`, {
+    const response = await fetch(`${baseUrl}/api/v1/chat/upload`, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -60,6 +60,7 @@ describeContract('POST /api/v1/chat/upload Contract', () => {
   })
 
   it('should reject unauthorized upload requests', async () => {
+    const baseUrl = getContractBaseUrl()
     const formData = new FormData()
     formData.append('projectId', 'test-project-id')
     
@@ -68,7 +69,7 @@ describeContract('POST /api/v1/chat/upload Contract', () => {
     })
     formData.append('files', testFile)
 
-    const response = await fetch(`${BASE_URL}/api/v1/chat/upload`, {
+    const response = await fetch(`${baseUrl}/api/v1/chat/upload`, {
       method: 'POST',
       // No Authorization header
       body: formData,

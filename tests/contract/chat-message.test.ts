@@ -2,9 +2,8 @@ import { it, expect } from 'vitest'
 import { describeContract, getContractBaseUrl } from './utils'
 
 describeContract('POST /api/v1/chat/message Contract', () => {
-  const BASE_URL = getContractBaseUrl()
-
   it('should accept valid chat message request', async () => {
+    const baseUrl = getContractBaseUrl()
     const validRequest = {
       projectId: 'test-project-id',
       sessionId: 'test-session-id',
@@ -12,7 +11,7 @@ describeContract('POST /api/v1/chat/message Contract', () => {
     }
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`${BASE_URL}/api/v1/chat/message`, {
+    const response = await fetch(`${baseUrl}/api/v1/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,12 +30,13 @@ describeContract('POST /api/v1/chat/message Contract', () => {
   })
 
   it('should reject requests without required fields', async () => {
+    const baseUrl = getContractBaseUrl()
     const invalidRequest = {
       projectId: 'test-project-id',
       // Missing message field
     }
 
-    const response = await fetch(`${BASE_URL}/api/v1/chat/message`, {
+    const response = await fetch(`${baseUrl}/api/v1/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,12 +53,13 @@ describeContract('POST /api/v1/chat/message Contract', () => {
   })
 
   it('should reject unauthorized requests', async () => {
+    const baseUrl = getContractBaseUrl()
     const validRequest = {
       projectId: 'test-project-id',
       message: 'Hello',
     }
 
-    const response = await fetch(`${BASE_URL}/api/v1/chat/message`, {
+    const response = await fetch(`${baseUrl}/api/v1/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

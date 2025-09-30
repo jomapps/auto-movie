@@ -2,9 +2,8 @@ import { it, expect } from 'vitest'
 import { describeContract, getContractBaseUrl } from './utils'
 
 describeContract('POST /api/v1/projects Contract', () => {
-  const BASE_URL = getContractBaseUrl()
-
   it('should create project with valid data', async () => {
+    const baseUrl = getContractBaseUrl()
     const validProject = {
       title: 'My Sci-Fi Adventure',
       description: 'A thrilling space adventure with robots and aliens',
@@ -19,7 +18,7 @@ describeContract('POST /api/v1/projects Contract', () => {
     }
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
+    const response = await fetch(`${baseUrl}/api/v1/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,13 +42,14 @@ describeContract('POST /api/v1/projects Contract', () => {
   })
 
   it('should reject project with invalid episode count', async () => {
+    const baseUrl = getContractBaseUrl()
     const invalidProject = {
       title: 'Invalid Project',
       genre: 'action',
       episodeCount: 100, // Exceeds max of 50
     }
 
-    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
+    const response = await fetch(`${baseUrl}/api/v1/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,6 +67,7 @@ describeContract('POST /api/v1/projects Contract', () => {
   })
 
   it('should reject project when subscription limit exceeded', async () => {
+    const baseUrl = getContractBaseUrl()
     const validProject = {
       title: 'Subscription Limit Test',
       genre: 'comedy',
@@ -74,7 +75,7 @@ describeContract('POST /api/v1/projects Contract', () => {
     }
 
     // Assume user already has maximum projects for their tier
-    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
+    const response = await fetch(`${baseUrl}/api/v1/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

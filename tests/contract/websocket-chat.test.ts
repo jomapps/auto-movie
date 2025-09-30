@@ -3,12 +3,12 @@ import { io, Socket } from 'socket.io-client'
 import { describeContract, getContractBaseUrl } from './utils'
 
 describeContract('WebSocket /api/v1/websocket Contract', () => {
-  const BASE_URL = getContractBaseUrl()
   let clientSocket: Socket
 
   beforeEach((done) => {
     // This test MUST fail initially (no implementation yet)
-    clientSocket = io(`${BASE_URL}/api/v1/websocket`, {
+    const baseUrl = getContractBaseUrl()
+    clientSocket = io(`${baseUrl}/api/v1/websocket`, {
       query: {
         projectId: 'test-project-id',
         sessionId: 'test-session-id',

@@ -2,11 +2,10 @@ import { it, expect } from 'vitest'
 import { describeContract, getContractBaseUrl } from './utils'
 
 describeContract('GET /api/v1/projects Contract', () => {
-  const BASE_URL = getContractBaseUrl()
-
   it('should return paginated projects list', async () => {
+    const baseUrl = getContractBaseUrl()
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
+    const response = await fetch(`${baseUrl}/api/v1/projects`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -38,7 +37,8 @@ describeContract('GET /api/v1/projects Contract', () => {
   })
 
   it('should filter projects by status', async () => {
-    const response = await fetch(`${BASE_URL}/api/v1/projects?status=concept`, {
+    const baseUrl = getContractBaseUrl()
+    const response = await fetch(`${baseUrl}/api/v1/projects?status=concept`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -54,7 +54,8 @@ describeContract('GET /api/v1/projects Contract', () => {
   })
 
   it('should respect pagination parameters', async () => {
-    const response = await fetch(`${BASE_URL}/api/v1/projects?page=1&limit=5`, {
+    const baseUrl = getContractBaseUrl()
+    const response = await fetch(`${baseUrl}/api/v1/projects?page=1&limit=5`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',

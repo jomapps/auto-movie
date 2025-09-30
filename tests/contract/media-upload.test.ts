@@ -2,9 +2,8 @@ import { it, expect } from 'vitest'
 import { describeContract, getContractBaseUrl } from './utils'
 
 describeContract('POST /api/v1/media/upload Contract', () => {
-  const BASE_URL = getContractBaseUrl()
-
   it('should upload media files to project', async () => {
+    const baseUrl = getContractBaseUrl()
     const formData = new FormData()
     formData.append('projectId', 'test-project-id')
     formData.append('mediaType', 'style_reference')
@@ -17,7 +16,7 @@ describeContract('POST /api/v1/media/upload Contract', () => {
     formData.append('files', testFile)
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`${BASE_URL}/api/v1/media/upload`, {
+    const response = await fetch(`${baseUrl}/api/v1/media/upload`, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -42,6 +41,7 @@ describeContract('POST /api/v1/media/upload Contract', () => {
   })
 
   it('should reject upload without project ID', async () => {
+    const baseUrl = getContractBaseUrl()
     const formData = new FormData()
     formData.append('mediaType', 'style_reference')
     
@@ -50,7 +50,7 @@ describeContract('POST /api/v1/media/upload Contract', () => {
     })
     formData.append('files', testFile)
 
-    const response = await fetch(`${BASE_URL}/api/v1/media/upload`, {
+    const response = await fetch(`${baseUrl}/api/v1/media/upload`, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -66,6 +66,7 @@ describeContract('POST /api/v1/media/upload Contract', () => {
   })
 
   it('should reject unauthorized upload', async () => {
+    const baseUrl = getContractBaseUrl()
     const formData = new FormData()
     formData.append('projectId', 'test-project-id')
     formData.append('mediaType', 'style_reference')
@@ -75,7 +76,7 @@ describeContract('POST /api/v1/media/upload Contract', () => {
     })
     formData.append('files', testFile)
 
-    const response = await fetch(`${BASE_URL}/api/v1/media/upload`, {
+    const response = await fetch(`${baseUrl}/api/v1/media/upload`, {
       method: 'POST',
       // No Authorization header
       body: formData,
