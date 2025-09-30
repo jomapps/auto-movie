@@ -1,11 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('GET /api/v1/projects/{id} Contract', () => {
+describeContract('GET /api/v1/projects/{id} Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should return detailed project information', async () => {
     const projectId = 'test-project-id'
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`http://localhost:3010/api/v1/projects/${projectId}`, {
+    const response = await fetch(`${BASE_URL}/api/v1/projects/${projectId}`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -45,7 +48,7 @@ describe('GET /api/v1/projects/{id} Contract', () => {
   })
 
   it('should return 404 for non-existent project', async () => {
-    const response = await fetch('http://localhost:3010/api/v1/projects/non-existent-id', {
+    const response = await fetch(`${BASE_URL}/api/v1/projects/non-existent-id`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -59,7 +62,7 @@ describe('GET /api/v1/projects/{id} Contract', () => {
   })
 
   it('should reject access to unauthorized project', async () => {
-    const response = await fetch('http://localhost:3010/api/v1/projects/unauthorized-project-id', {
+    const response = await fetch(`${BASE_URL}/api/v1/projects/unauthorized-project-id`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer other-user-token',

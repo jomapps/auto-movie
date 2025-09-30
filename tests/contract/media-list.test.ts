@@ -1,11 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('GET /api/v1/media Contract', () => {
+describeContract('GET /api/v1/media Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should return project media with pagination', async () => {
     const projectId = 'test-project-id'
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch(`http://localhost:3010/api/v1/media?projectId=${projectId}`, {
+    const response = await fetch(`${BASE_URL}/api/v1/media?projectId=${projectId}`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -34,7 +37,7 @@ describe('GET /api/v1/media Contract', () => {
   })
 
   it('should filter media by type', async () => {
-    const response = await fetch('http://localhost:3010/api/v1/media?projectId=test-project-id&mediaType=character_design', {
+    const response = await fetch(`${BASE_URL}/api/v1/media?projectId=test-project-id&mediaType=character_design`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -50,7 +53,7 @@ describe('GET /api/v1/media Contract', () => {
   })
 
   it('should require project ID parameter', async () => {
-    const response = await fetch('http://localhost:3010/api/v1/media', {
+    const response = await fetch(`${BASE_URL}/api/v1/media`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',

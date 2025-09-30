@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('POST /api/v1/chat/message Contract', () => {
+describeContract('POST /api/v1/chat/message Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should accept valid chat message request', async () => {
     const validRequest = {
       projectId: 'test-project-id',
@@ -9,7 +12,7 @@ describe('POST /api/v1/chat/message Contract', () => {
     }
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch('http://localhost:3010/api/v1/chat/message', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +36,7 @@ describe('POST /api/v1/chat/message Contract', () => {
       // Missing message field
     }
 
-    const response = await fetch('http://localhost:3010/api/v1/chat/message', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +58,7 @@ describe('POST /api/v1/chat/message Contract', () => {
       message: 'Hello',
     }
 
-    const response = await fetch('http://localhost:3010/api/v1/chat/message', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('POST /api/v1/chat/upload Contract', () => {
+describeContract('POST /api/v1/chat/upload Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should accept valid file upload', async () => {
     const formData = new FormData()
     formData.append('projectId', 'test-project-id')
@@ -13,7 +16,7 @@ describe('POST /api/v1/chat/upload Contract', () => {
     formData.append('files', testFile)
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch('http://localhost:3010/api/v1/chat/upload', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/upload`, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -42,7 +45,7 @@ describe('POST /api/v1/chat/upload Contract', () => {
     })
     formData.append('files', largeFile)
 
-    const response = await fetch('http://localhost:3010/api/v1/chat/upload', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/upload`, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -65,7 +68,7 @@ describe('POST /api/v1/chat/upload Contract', () => {
     })
     formData.append('files', testFile)
 
-    const response = await fetch('http://localhost:3010/api/v1/chat/upload', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/upload`, {
       method: 'POST',
       // No Authorization header
       body: formData,

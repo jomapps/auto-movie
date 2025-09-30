@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('POST /api/v1/chat/choice Contract', () => {
+describeContract('POST /api/v1/chat/choice Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should accept valid choice selection', async () => {
     const validRequest = {
       sessionId: 'test-session-id',
@@ -8,7 +11,7 @@ describe('POST /api/v1/chat/choice Contract', () => {
     }
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch('http://localhost:3010/api/v1/chat/choice', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/choice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +36,7 @@ describe('POST /api/v1/chat/choice Contract', () => {
       customInput: 'I want to focus specifically on character development first',
     }
 
-    const response = await fetch('http://localhost:3010/api/v1/chat/choice', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/choice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +57,7 @@ describe('POST /api/v1/chat/choice Contract', () => {
       choiceId: 'develop_story',
     }
 
-    const response = await fetch('http://localhost:3010/api/v1/chat/choice', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/choice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

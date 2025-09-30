@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('POST /api/v1/projects Contract', () => {
+describeContract('POST /api/v1/projects Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should create project with valid data', async () => {
     const validProject = {
       title: 'My Sci-Fi Adventure',
@@ -16,7 +19,7 @@ describe('POST /api/v1/projects Contract', () => {
     }
 
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch('http://localhost:3010/api/v1/projects', {
+    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,7 +49,7 @@ describe('POST /api/v1/projects Contract', () => {
       episodeCount: 100, // Exceeds max of 50
     }
 
-    const response = await fetch('http://localhost:3010/api/v1/projects', {
+    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +74,7 @@ describe('POST /api/v1/projects Contract', () => {
     }
 
     // Assume user already has maximum projects for their tier
-    const response = await fetch('http://localhost:3010/api/v1/projects', {
+    const response = await fetch(`${BASE_URL}/api/v1/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

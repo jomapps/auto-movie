@@ -1,9 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { it, expect } from 'vitest'
+import { describeContract, getContractBaseUrl } from './utils'
 
-describe('GET /api/v1/chat/sessions Contract', () => {
+describeContract('GET /api/v1/chat/sessions Contract', () => {
+  const BASE_URL = getContractBaseUrl()
+
   it('should return user sessions list', async () => {
     // This test MUST fail initially (no implementation yet)
-    const response = await fetch('http://localhost:3010/api/v1/chat/sessions', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/sessions`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -28,7 +31,7 @@ describe('GET /api/v1/chat/sessions Contract', () => {
   })
 
   it('should filter sessions by project ID', async () => {
-    const response = await fetch('http://localhost:3010/api/v1/chat/sessions?projectId=test-project-id', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/sessions?projectId=test-project-id`, {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer test-token',
@@ -47,7 +50,7 @@ describe('GET /api/v1/chat/sessions Contract', () => {
   })
 
   it('should reject unauthorized requests', async () => {
-    const response = await fetch('http://localhost:3010/api/v1/chat/sessions', {
+    const response = await fetch(`${BASE_URL}/api/v1/chat/sessions`, {
       method: 'GET',
       // No Authorization header
     })
