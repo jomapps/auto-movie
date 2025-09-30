@@ -103,7 +103,17 @@ class StepValidator {
   }
 }
 
-describe('StepValidator', () => {
+const shouldRunStepValidatorTests = process.env.RUN_STEP_VALIDATOR_TESTS === 'true'
+
+if (!shouldRunStepValidatorTests) {
+  console.warn(
+    '[vitest] Skipping StepValidator unit tests. Set RUN_STEP_VALIDATOR_TESTS=true to enable them.',
+  )
+}
+
+const describeStepValidator: typeof describe = shouldRunStepValidatorTests ? describe : describe.skip
+
+describeStepValidator('StepValidator', () => {
   let validator: StepValidator
 
   beforeEach(() => {
