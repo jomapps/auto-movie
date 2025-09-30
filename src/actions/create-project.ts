@@ -40,6 +40,7 @@ export async function createProject(
       genre: rawData.genre,
       episodeCount: rawData.episodeCount,
       targetAudience: rawData.targetAudience,
+      status: rawData.status,
       projectSettings: {
         aspectRatio: rawData.aspectRatio,
         episodeDuration: rawData.episodeDuration,
@@ -87,9 +88,9 @@ export async function createProject(
         genre: validatedData.genre,
         episodeCount: validatedData.episodeCount,
         targetAudience: validatedData.targetAudience,
-        status: 'concept', // Default status for new projects
+        status: validatedData.status,
         projectSettings: validatedData.projectSettings,
-        createdBy: defaultUser.id, // Use actual user ID
+        createdBy: defaultUser.id,
       },
     })
 
@@ -106,10 +107,10 @@ export async function createProject(
   } catch (error) {
     console.error('Create project error:', error)
 
-    // Handle Zod validation errors
+    // Handle Zod validation errors (Zod v4 uses 'issues' not 'errors')
     if (error?.constructor?.name === 'ZodError') {
       const zodError = error as any
-      const firstError = zodError.errors[0]
+      const firstError = zodError.issues?.[0]
       return {
         success: false,
         error: firstError?.message || 'Invalid form data. Please check your inputs.',
