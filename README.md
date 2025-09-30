@@ -40,6 +40,33 @@ This platform follows strict constitutional principles for scalable, maintainabl
 
 ## 🚀 Quick Start
 
+### Local Development (Recommended)
+
+**Develop locally while connecting to live production services:**
+
+```bash
+cd apps/auto-movie
+
+# 1. Configure environment (edit .env.local with production credentials)
+code .env.local
+
+# 2. Run the startup script
+./dev-local.sh          # Linux/Mac
+.\dev-local.ps1         # Windows PowerShell
+
+# Or manually:
+pnpm install
+pnpm generate:types
+pnpm dev
+```
+
+📖 **Full Guide**: [docs/quick-start-local-dev.md](docs/quick-start-local-dev.md)
+📖 **Detailed Setup**: [docs/local-development-setup.md](docs/local-development-setup.md)
+
+### Standalone Development (All Services Local)
+
+**Run everything locally (requires all services):**
+
 ### Prerequisites
 - Node.js 18.20.2+
 - MongoDB (local or cloud)
@@ -61,7 +88,7 @@ pnpm install
 DATABASE_URI=mongodb://localhost:27017/auto-movie
 PAYLOAD_SECRET=your-secret-key-here
 
-# PayloadCMS  
+# PayloadCMS
 PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3010
 
 # AI Services (optional for development)
